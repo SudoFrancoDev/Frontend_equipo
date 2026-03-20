@@ -154,30 +154,27 @@ Crear las tablas usando el script SQL que esta en carpeta: postgresql
   ✅ Exportar datos a PostgreSQL desde psql
 </p>
 
-<pre>
-psql
-
+```bash
+  
 #Hacerlo por cada tabla usando los csv de la carpeta csv
 \copy nombre_tabla FROM 'C:ubicacion/de_archivo.csv/en_sus/equipos' DELIMITER ',' CSV HEADER;
-</pre>
-
+  
+```
 
 <p align="center">
  ✅ Instalar librerias en Python version 13.12.7
 </p>
 
-<pre>
-bash
-
+```bash
 pip install -r requirements.txt
-</pre>
+```
 
 <p align="center">
   ✅ Script para correr el backend
 </p>
 
-<pre>
-bash
+
+```bash
 
 # Crear entorno
 python -m venv env
@@ -190,4 +187,6 @@ pip install -r requirements.txt
 
 # Ejecutar API
 uvicorn src.main:app --reload
-</pre>
+
+```
+
