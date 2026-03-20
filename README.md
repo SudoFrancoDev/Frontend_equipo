@@ -48,7 +48,7 @@ El objetivo es ofrecer una experiencia visual moderna e interactiva para explora
 ### 📰 Listado de Artículos
 
 <p align="center">
-  <img src="mockup/Recomendaciones.png" width="700"/>
+  <img src="mockup/Recomendaciones.PNG" width="700"/>
 </p>
 
 📌 Reglas:
@@ -62,7 +62,7 @@ El objetivo es ofrecer una experiencia visual moderna e interactiva para explora
 ### 🧩 Interacción con Cards
 
 <p align="center">
-  <img src="mockup/Recomendar_similares.png" width="700"/>
+  <img src="mockup/Recomendar_similares.PNG" width="700"/>
 </p>
 
 🖱️ Comportamiento:
@@ -78,7 +78,7 @@ El objetivo es ofrecer una experiencia visual moderna e interactiva para explora
 ### 🔍 Recomendaciones de Similitud
 
 <p align="center">
-  <img src="mockup/Recomendados_similares.png" width="700"/>
+  <img src="mockup/Recomendados_similares.PNG" width="700"/>
 </p>
 
 🤖 Funcionalidad:
