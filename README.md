@@ -33,7 +33,7 @@ El objetivo es ofrecer una experiencia visual moderna e interactiva para explora
 ### 🎞️ Card Slider Automático
 
 <p align="center">
-  <img src="mockup/Busqueda.png" width="700"/>
+  <img src="mockup/Busqueda.PNG" width="700"/>
 </p>
 
 ✨ Características:
@@ -48,7 +48,7 @@ El objetivo es ofrecer una experiencia visual moderna e interactiva para explora
 ### 📰 Listado de Artículos
 
 <p align="center">
-  <img src="mockup/Recomendaciones.png" width="700"/>
+  <img src="mockup/Recomendaciones.PNG" width="700"/>
 </p>
 
 📌 Reglas:
@@ -62,7 +62,7 @@ El objetivo es ofrecer una experiencia visual moderna e interactiva para explora
 ### 🧩 Interacción con Cards
 
 <p align="center">
-  <img src="mockup/Recomendar_similares.png" width="700"/>
+  <img src="mockup/Recomendar_similares.PNG" width="700"/>
 </p>
 
 🖱️ Comportamiento:
@@ -78,7 +78,7 @@ El objetivo es ofrecer una experiencia visual moderna e interactiva para explora
 ### 🔍 Recomendaciones de Similitud
 
 <p align="center">
-  <img src="mockup/Recomendados_similares.png" width="700"/>
+  <img src="mockup/Recomendados_similares.PNG" width="700"/>
 </p>
 
 🤖 Funcionalidad:
@@ -138,46 +138,45 @@ GET /articles
   💡 Proyecto en construcción — iteración continua
 </p>
 
-<p align="center">
-  ✅ Crear base de datos en PostgreSQL
-</p>
+
+##  ✅ Crear base de datos en PostgreSQL
 
 <pre>
 Crear base de datos con el nombre: mediumdb
+
+Cuando instalen PostgreSQL replicar el mismo usuario:
+
+Usuario: root
+Contraseña: root
 
 !No cambiar nombre de las tablas ni de la base de datos!
 
 Crear las tablas usando el script SQL que esta en carpeta: postgresql
 </pre>
 
-<p align="center">
-  ✅ Exportar datos a PostgreSQL desde psql
-</p>
+##  ✅ Exportar datos a PostgreSQL desde psql
 
-<pre>
-psql
-
+```bash
+  
 #Hacerlo por cada tabla usando los csv de la carpeta csv
 \copy nombre_tabla FROM 'C:ubicacion/de_archivo.csv/en_sus/equipos' DELIMITER ',' CSV HEADER;
-</pre>
+  
+```
 
 
-<p align="center">
- ✅ Instalar librerias en Python version 13.12.7
-</p>
+## ✅ Instalar librerias en Python version 13.12.7
 
-<pre>
-bash
 
+```bash
 pip install -r requirements.txt
-</pre>
+```
 
-<p align="center">
-  ✅ Script para correr el backend
-</p>
 
-<pre>
-bash
+##  ✅ Script para correr el backend
+
+
+
+```bash
 
 # Crear entorno
 python -m venv env
@@ -190,4 +189,6 @@ pip install -r requirements.txt
 
 # Ejecutar API
 uvicorn src.main:app --reload
-</pre>
+
+```
+
