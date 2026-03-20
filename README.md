@@ -138,21 +138,23 @@ GET /articles
   💡 Proyecto en construcción — iteración continua
 </p>
 
-<p align="center">
-  ✅ Crear base de datos en PostgreSQL
-</p>
+
+##  ✅ Crear base de datos en PostgreSQL
 
 <pre>
 Crear base de datos con el nombre: mediumdb
+
+Cuando instalen PostgreSQL replicar el mismo usuario:
+
+Usuario: root
+Contraseña: root
 
 !No cambiar nombre de las tablas ni de la base de datos!
 
 Crear las tablas usando el script SQL que esta en carpeta: postgresql
 </pre>
 
-<p align="center">
-  ✅ Exportar datos a PostgreSQL desde psql
-</p>
+##  ✅ Exportar datos a PostgreSQL desde psql
 
 ```bash
   
@@ -161,17 +163,17 @@ Crear las tablas usando el script SQL que esta en carpeta: postgresql
   
 ```
 
-<p align="center">
- ✅ Instalar librerias en Python version 13.12.7
-</p>
+
+## ✅ Instalar librerias en Python version 13.12.7
+
 
 ```bash
 pip install -r requirements.txt
 ```
 
-<p align="center">
-  ✅ Script para correr el backend
-</p>
+
+##  ✅ Script para correr el backend
+
 
 
 ```bash
