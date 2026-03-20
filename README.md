@@ -33,7 +33,7 @@ El objetivo es ofrecer una experiencia visual moderna e interactiva para explora
 ### 🎞️ Card Slider Automático
 
 <p align="center">
-  <img src="mockup/Busqueda.png" width="700"/>
+  <img src="mockup/Busqueda.PNG" width="700"/>
 </p>
 
 ✨ Características:
