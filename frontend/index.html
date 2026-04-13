@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Search — Descubre artículos</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ════════════ HEADER ════════════ -->
+  <header class="main-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo">Smart<span>Search</span></a>
+      <a href="articles.html" class="header-nav-btn">Ver todos los artículos →</a>
+    </div>
+  </header>
+
+  <!-- ════════════ HERO ════════════ -->
+  <section class="hero">
+    <span class="hero-eyebrow">Buscador inteligente · TF-IDF + Embeddings</span>
+    <h1>¿Qué quieres<br><span>descubrir</span> hoy?</h1>
+    <p class="hero-sub">Explora miles de artículos con búsqueda semántica inteligente.</p>
+
+    <div class="hero-search">
+      <input id="heroSearch"
+             type="text"
+             placeholder="Ej: machine learning, productividad, diseño…"
+             autofocus>
+      <button onclick="heroSearch()">Buscar</button>
+    </div>
+
+    <p class="hero-link">
+      ¿Quieres explorar todo el catálogo? <a href="articles.html">Ver artículos →</a>
+    </p>
+  </section>
+
+  <!-- ════════════ SLIDER ════════════ -->
+  <section class="slider-section">
+    <div class="section-header">
+      <h2 class="section-title">
+        <span></span>Artículos destacados
+      </h2>
+      <div class="slider-controls">
+        <button class="slider-btn" onclick="sliderPrev()" title="Anterior">‹</button>
+        <button class="slider-btn" onclick="sliderNext()" title="Siguiente">›</button>
+      </div>
+    </div>
+
+    <div class="slider-viewport">
+      <div class="slider-track" id="slider-track">
+        <!-- Cargado por JS -->
+      </div>
+    </div>
+
+    <div class="slider-dots" id="slider-dots"></div>
+  </section>
+
+  <!-- ════════════ TRENDING ════════════ -->
+  <section class="trending-section">
+    <div class="section-header">
+      <h2 class="section-title">
+        <span></span>Tendencias populares
+      </h2>
+    </div>
+    <div class="trending-tags">
+      <a class="trend-tag" onclick="goTag('artificial intelligence')">AI</a>
+      <a class="trend-tag" onclick="goTag('productivity')">Productividad</a>
+      <a class="trend-tag" onclick="goTag('programming')">Programación</a>
+      <a class="trend-tag" onclick="goTag('machine learning')">Machine Learning</a>
+      <a class="trend-tag" onclick="goTag('career')">Carrera</a>
+      <a class="trend-tag" onclick="goTag('data science')">Data Science</a>
+      <a class="trend-tag" onclick="goTag('software development')">Desarrollo</a>
+      <a class="trend-tag" onclick="goTag('mental health')">Salud mental</a>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>

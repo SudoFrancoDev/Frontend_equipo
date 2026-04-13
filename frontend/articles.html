@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Search — Artículos</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ════════════ HEADER ════════════ -->
+  <header class="main-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo">Smart<span>Search</span></a>
+
+      <div class="search-wrap">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input id="searchInput"
+               type="text"
+               placeholder="Buscar artículos…">
+        <button onclick="doSearch()">Buscar</button>
+      </div>
+
+      <a href="index.html" class="header-nav-btn">← Inicio</a>
+    </div>
+  </header>
+
+  <!-- ════════════ MAIN CONTENT ════════════ -->
+  <main class="page-content">
+
+    <!-- Barra de resultados -->
+    <div class="results-bar" id="results-bar"></div>
+
+    <!-- Lista de artículos -->
+    <div class="articles-list" id="articles-list">
+      <div class="state-msg">
+        <div class="loading-dots">
+          <span></span><span></span><span></span>
+        </div>
+        <p style="margin-top:14px;font-size:0.85rem;">Iniciando…</p>
+      </div>
+    </div>
+
+    <!-- Paginación -->
+    <div class="pagination" id="pagination"></div>
+
+    <!-- Panel de artículos similares -->
+    <div class="similar-section" id="similar-section"></div>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
