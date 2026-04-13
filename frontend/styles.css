@@ -601,6 +601,26 @@ body::before {
   transform: scale(1.04);
 }
 
+.btn-ver-articulo {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--border-sel);
+  border-radius: 50px;
+  color: var(--accent);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--tr);
+  white-space: nowrap;
+}
+.btn-ver-articulo:hover {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+}
+
 /* ============================================================
    ARTICLES PAGE — Pagination
    ============================================================ */
