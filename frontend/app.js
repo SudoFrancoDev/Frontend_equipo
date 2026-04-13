@@ -311,7 +311,7 @@ function renderArticles() {
       </div>`;
     return;
   }
-
+ 
   list.innerHTML = state.articles.map(a => `
     <div class="article-card"
          id="card-${CSS.escape(a.article_id)}"
@@ -329,6 +329,13 @@ function renderArticles() {
               onclick="handleVerSimilares(event, this)">
         Ver similares
       </button>
+      <a class="btn-ver-articulo"
+         href="${escAttr(a.article_id)}"
+         target="_blank"
+         rel="noopener noreferrer"
+         onclick="event.stopPropagation()">
+        Ver artículo ↗
+      </a>
     </div>`
   ).join("");
 }
