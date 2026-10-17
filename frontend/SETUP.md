@@ -7,141 +7,116 @@
 | Programa           | Versión requerida    | Descarga                                  |
 |--------------------|----------------------|-------------------------------------------|
 | **Python**         | 3.12.x               | https://www.python.org/downloads/         |
-| **PostgreSQL**     | 16.x                 | https://www.postgresql.org/download/      |
+| **PostgreSQL**     | 16.x o superior      | https://www.postgresql.org/download/      |
 | **pip**            | incluido con Python  | —                                         |
 | **Navegador**      | Chrome / Firefox     | —                                         |
 
-> **No se necesita Node.js ni React.** El frontend es HTML/CSS/JS puro que se abre directamente en el navegador.
+> **No se necesita Node.js ni React.** El frontend es HTML/CSS/JS puro.
 
 ---
 
 ## Paso 1 — Instalar PostgreSQL
 
-1. Descarga e instala **PostgreSQL 16** para tu sistema operativo.
-2. Durante la instalación, cuando pida contraseña para el usuario **postgres**, escribe: `root`
-3. Deja el puerto por defecto: **5432**
-4. Después de instalar, abre **pgAdmin** o la terminal **psql** y verifica que funcione.
-
-> ⚠️ Si instalaste PostgreSQL con otro usuario o contraseña, edita el archivo  
-> `Frontend_equipo-main/main.py` línea donde dice `user="postgres", password="root"` y ajústalo.
+1. Descarga e instala **PostgreSQL** para tu sistema operativo.
+2. Deja el puerto por defecto: **5432**.
+3. Después de instalar, abre **pgAdmin** o la terminal **psql** y verifica que funcione.
 
 ---
 
-## Paso 2 — Crear la base de datos y las tablas
+## Paso 2 — Crear el usuario y la base de datos
 
-Abre **psql** o pgAdmin y ejecuta:
+El proyecto se conecta con estos datos (definidos en `main.py`):
+
+| Dato           | Valor       |
+|----------------|-------------|
+| Host / puerto  | `localhost:5432` |
+| Base de datos  | `news_dw`   |
+| Usuario        | `myuser`    |
+| Contraseña     | `admin`     |
+
+Abre **psql** como superusuario (`postgres`) y ejecuta:
 
 ```sql
--- 1. Crear la base de datos
-CREATE DATABASE mediumdb;
-
--- 2. Conectarte a ella
-\c mediumdb
+CREATE USER myuser WITH PASSWORD 'admin';
+CREATE DATABASE news_dw OWNER myuser;
 ```
 
-Luego ejecuta el script de creación de tablas que está en la carpeta `postgresql/`:
-
-```sql
--- Contenido de postgresql/tablas.sql
-
-CREATE TABLE dim_date (
-    date_key SERIAL PRIMARY KEY,
-    full_date TIMESTAMP,
-    year INT,
-    quarter INT,
-    month INT,
-    month_name VARCHAR(20),
-    day INT,
-    day_of_week VARCHAR(20),
-    week_of_year INT
-);
-
-CREATE TABLE dim_feed_tag (
-    feed_tag_key SERIAL PRIMARY KEY,
-    feed_tag_name TEXT
-);
-
-CREATE TABLE fact_articles (
-    article_key SERIAL PRIMARY KEY,
-    article_id TEXT UNIQUE,
-    title TEXT
-);
-```
+> ⚠️ Si usas otro usuario o contraseña, cámbialos en `main.py`, en el bloque `PostgreSQLConnection(...)`.
 
 ---
 
-## Paso 3 — Importar los datos CSV
+## Paso 3 — Crear las tablas y cargar los datos
 
-En psql (conectado a mediumdb), ejecuta **un comando por cada tabla**.  
-Reemplaza `C:/ruta/a/tu/proyecto` con la ubicación real de la carpeta `csv/`:
+Todo está en la carpeta `POSTGRES_BD/`:
 
-```sql
--- Importar dim_date
-\copy dim_date FROM 'C:/ruta/a/tu/proyecto/csv/dim_date.csv' DELIMITER ',' CSV HEADER;
+| Archivo             | Qué hace                                                                 |
+|---------------------|--------------------------------------------------------------------------|
+| `create_tables.sql` | Crea los esquemas `dw` (tablas) y `mart` (vistas)                         |
+| `load_data.sql`     | Importa los 6 CSV de `POSTGRES_BD/CSV/` en una sola transacción           |
+| `CSV/*.csv`         | Datos: `dim_date`, `dim_category`, `dim_source`, `dim_article`, `fact_article`, `article_content` |
 
--- Importar dim_feed_tag
-\copy dim_feed_tag FROM 'C:/ruta/a/tu/proyecto/csv/dim_feed_tag.csv' DELIMITER ',' CSV HEADER;
+> ⚠️ `create_tables.sql` **borra y vuelve a crear** los esquemas `dw` y `mart` con todos sus datos.
 
--- Importar fact_articles
-\copy fact_articles FROM 'C:/ruta/a/tu/proyecto/csv/fact_articles.csv' DELIMITER ',' CSV HEADER;
+`load_data.sql` usa rutas relativas, así que hay que ejecutarlo **desde la carpeta de los CSV**:
+
+**Linux / Mac:**
+```bash
+cd POSTGRES_BD/CSV
+psql -h localhost -U myuser -d news_dw -f ../create_tables.sql
+psql -h localhost -U myuser -d news_dw -f ../load_data.sql
 ```
 
-**Ejemplo en Windows:**
-```sql
-\copy fact_articles FROM 'C:/Users/TuNombre/Desktop/Frontend_equipo-main/csv/fact_articles.csv' DELIMITER ',' CSV HEADER;
+**Windows (PowerShell o CMD):**
+```bat
+cd POSTGRES_BD\CSV
+psql -h localhost -U myuser -d news_dw -f ..\create_tables.sql
+psql -h localhost -U myuser -d news_dw -f ..\load_data.sql
 ```
 
-**Ejemplo en Mac/Linux:**
+Al terminar, `load_data.sql` muestra el número de filas por tabla. Debe aparecer `fact_article` con **1870** filas.
+
+Para comprobarlo manualmente:
 ```sql
-\copy fact_articles FROM '/home/usuario/Frontend_equipo-main/csv/fact_articles.csv' DELIMITER ',' CSV HEADER;
+SELECT count(*) FROM dw.fact_article;    -- 1870
+SELECT count(*) FROM dw.dim_category;    -- 63
 ```
 
-Verifica que los datos se cargaron:
+### Modelo de datos usado por la API
+
+La API solo lee tres columnas, uniendo la tabla de hechos con dos dimensiones (`repository/article_repository.py`):
+
 ```sql
-SELECT COUNT(*) FROM fact_articles;   -- debe mostrar miles de filas
-SELECT COUNT(*) FROM dim_feed_tag;
+SELECT da.title, da.url, dc.category_name
+FROM dw.fact_article fa
+JOIN dw.dim_article  da ON da.article_key  = fa.article_key
+JOIN dw.dim_category dc ON dc.category_key = fa.category_key
+ORDER BY fa.article_key;
 ```
+
+- `url` identifica cada artículo (es único).
+- `category_name` es el tema que se muestra en las cards y en "Tendencias populares".
 
 ---
 
-## Paso 4 — Corrección necesaria en main.py (feed_tag_name)
+## Paso 4 — Configurar el entorno Python y las dependencias
 
-El archivo `main.py` tiene `DISPLAY_COLUMNS = ["title", "article_id"]`.  
-Esto hace que el API **no devuelva las etiquetas** de cada artículo.
-
-**Abre `Frontend_equipo-main/main.py` y cambia la línea 14:**
-
-```python
-# ANTES:
-DISPLAY_COLUMNS = ["title", "article_id"]
-
-# DESPUÉS:
-DISPLAY_COLUMNS = ["title", "article_id", "feed_tag_name"]
-```
-
-Esta es la única modificación necesaria al backend.
-
----
-
-## Paso 5 — Configurar el entorno Python y las dependencias
-
-Abre una terminal en la carpeta `Frontend_equipo-main/`:
+Abre una terminal en la carpeta raíz del proyecto (`Frontend_equipo/`) y crea el entorno virtual:
 
 ```bash
-cd Frontend_equipo-main
+python -m venv myenv
 ```
 
-Crea y activa el entorno virtual:
+Actívalo:
 
 ```bash
-# Crear entorno
-python -m venv env
+# Windows:
+myenv\Scripts\activate
 
-# Activar en Windows:
-env\Scripts\activate
+# Linux / Mac (bash, zsh):
+source myenv/bin/activate
 
-# Activar en Mac/Linux:
-source env/bin/activate
+# Linux (fish):
+source myenv/bin/activate.fish
 ```
 
 Instala las dependencias:
@@ -150,126 +125,131 @@ Instala las dependencias:
 pip install -r requeriments.txt
 ```
 
-Si la instalación falla por alguna librería, instálalas manualmente:
+> El archivo se llama `requeriments.txt` (con esa ortografía). Incluye `rank-bm25` (búsqueda BM25) y `sentence-transformers` (embeddings).
 
-```bash
-pip install fastapi==0.111.0
-pip install uvicorn==0.29.0
-pip install psycopg2-binary==2.9.9
-pip install pandas==2.2.2
-pip install scikit-learn==1.4.2
-pip install sentence-transformers==2.7.0
-pip install numpy==1.26.4
-pip install pydantic==2.7.1
-```
-
-> **Nota:** `sentence-transformers` descarga el modelo `all-MiniLM-L6-v2` (~90MB) la primera vez que se ejecuta. Asegúrate de tener conexión a internet en el primer arranque.
+> **Nota:** `sentence-transformers` descarga el modelo `all-MiniLM-L6-v2` (~90 MB) la primera vez que arranca la API. Necesitas conexión a internet en ese primer arranque.
 
 ---
 
-## Paso 6 — Iniciar el backend
+## Paso 5 — Iniciar el backend
 
-**Importante:** Debes ejecutar uvicorn **desde dentro** de la carpeta `Frontend_equipo-main/`, no desde una carpeta superior.
+Desde la carpeta raíz del proyecto, con el entorno activado:
 
 ```bash
-# Asegúrate de estar en la carpeta correcta:
-cd Frontend_equipo-main
-
-# Con el entorno activado:
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+uvicorn main:app --reload --port 8000
 ```
-
-> ⚠️ El README dice `uvicorn src.main:app` — eso es incorrecto porque no existe carpeta `src/`.  
-> El comando correcto es `uvicorn main:app --reload`.
 
 Si el servidor arrancó bien, verás algo así:
 
 ```
-INFO:     Artículos cargados: 15234
-INFO:     Modelo NLP entrenado y listo
-INFO:     Uvicorn running on http://0.0.0.0:8000
+INFO:main:Artículos cargados: 1870
+INFO:main:Modelo NLP entrenado y listo
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000
 ```
 
-El **entrenamiento del modelo tarda entre 1 y 3 minutos** la primera vez (descarga embeddings y vectoriza todos los artículos). Espera hasta ver "Modelo NLP entrenado y listo".
+El primer arranque tarda más porque descarga el modelo de embeddings. Los siguientes tardan unos segundos.
 
-Verifica en el navegador: http://localhost:8000/health  
-Debe responder: `{"status":"ok","model_loaded":true,...}`
+Comprueba en el navegador:
+- http://localhost:8000/health → `{"status":"ok","model_loaded":true,"articles_loaded":1870,...}`
+- http://localhost:8000/docs → documentación interactiva de todos los endpoints
 
 ---
 
-## Paso 7 — Abrir el frontend
+## Paso 6 — Abrir el frontend
 
-El frontend **no necesita servidor web**. Abre el archivo directamente:
+En **otra terminal**, sirve la carpeta `frontend/`:
 
-1. Navega a la carpeta `frontend/` (donde están los archivos HTML)
-2. Haz doble clic en `index.html`  
-   — O abre tu navegador y arrastra el archivo a él
+```bash
+cd frontend
+python -m http.server 5500
+```
+
+Y abre **http://localhost:5500/index.html**.
+
+> También funciona abriendo `index.html` con doble clic, pero se recomienda el servidor local para evitar restricciones del navegador con archivos `file://`.
 
 **Páginas:**
-- `index.html` → Página principal con buscador y slider de artículos
-- `articles.html` → Listado completo con búsqueda, paginación y "Ver similares"
+- `index.html` → buscador, slider de artículos destacados y tendencias populares (categorías de la BD)
+- `articles.html` → listado completo con búsqueda, paginación y "Ver similares"
+
+El frontend llama a la API en `http://localhost:8000` (constante `API` al inicio de `app.js`).
+
+---
+
+## Paso 7 — Ejecutar las pruebas (opcional)
+
+```bash
+python -m unittest discover -s tests -t . -v
+```
+
+No necesitan PostgreSQL ni internet: usan datos y embeddings simulados.
 
 ---
 
 ## Resumen de arranque diario
 
-Una vez todo instalado, cada vez que quieras usar el proyecto:
-
 ```bash
-# 1. Terminal → carpeta del proyecto
-cd Frontend_equipo-main
+# Terminal 1 — backend
+cd Frontend_equipo
+myenv\Scripts\activate              # Windows
+# source myenv/bin/activate         # Linux / Mac
+uvicorn main:app --reload --port 8000
 
-# 2. Activar entorno virtual
-env\Scripts\activate          # Windows
-# source env/bin/activate     # Mac/Linux
+# Terminal 2 — frontend
+cd Frontend_equipo/frontend
+python -m http.server 5500
 
-# 3. Iniciar backend
-uvicorn main:app --reload
-
-# 4. Abrir index.html en el navegador
+# Navegador
+# http://localhost:5500/index.html
 ```
+
+Para detener cualquiera de los dos servidores: `Ctrl+C` en su terminal.
 
 ---
 
 ## Solución de problemas comunes
 
-| Error                                    | Causa probable                          | Solución                                         |
-|------------------------------------------|-----------------------------------------|--------------------------------------------------|
-| `could not connect to server`            | PostgreSQL no está corriendo            | Inicia el servicio PostgreSQL desde el panel de control o `pg_ctl start` |
-| `password authentication failed`         | Contraseña incorrecta en main.py        | Cambia `password="root"` por la contraseña que usaste al instalar |
-| `ModuleNotFoundError`                    | Falta instalar dependencias             | `pip install -r requeriments.txt`               |
-| `uvicorn: command not found`             | Entorno virtual no activado             | Activa con `env\Scripts\activate`               |
-| `503 Modelo no disponible`               | El modelo aún está entrenando           | Espera 1-3 min hasta ver "Modelo NLP entrenado" en la terminal |
-| Frontend sin artículos (fondo vacío)     | Backend no corriendo o CORS bloqueado   | Verifica http://localhost:8000/health           |
-| Tags no aparecen en las cards            | DISPLAY_COLUMNS sin feed_tag_name       | Aplica la corrección del Paso 4                 |
+| Error / síntoma                          | Causa probable                                  | Solución                                         |
+|------------------------------------------|-------------------------------------------------|--------------------------------------------------|
+| `could not connect to server`            | PostgreSQL no está corriendo                    | Inicia el servicio (Windows: Servicios; Linux: `sudo systemctl start postgresql`). Comprueba con `pg_isready -h localhost` |
+| `password authentication failed`         | Usuario o contraseña distintos a los de `main.py` | Crea `myuser`/`admin` (Paso 2) o ajusta `main.py` |
+| `relation "dw.fact_article" does not exist` | No se ejecutaron los scripts SQL             | Repite el Paso 3                                 |
+| `could not open file "dim_date.csv"`     | `load_data.sql` se ejecutó desde otra carpeta   | Ejecútalo desde `POSTGRES_BD/CSV`                |
+| `ModuleNotFoundError` (p. ej. `rank_bm25`) | Faltan dependencias o el entorno no está activo | Activa el entorno y `pip install -r requeriments.txt` |
+| `uvicorn: command not found`             | Entorno virtual no activado                     | Activa el entorno (Paso 4)                       |
+| `address already in use`                 | El puerto 8000 o 5500 ya está ocupado           | Cierra el servidor anterior o usa otro puerto    |
+| `503 Modelo no disponible`               | La API aún está arrancando                      | Espera a ver "Modelo NLP entrenado y listo"      |
+| "Backend no disponible" en la portada    | La API no está corriendo                        | Verifica http://localhost:8000/health            |
 
 ---
 
-## Estructura final del proyecto
+## Estructura del proyecto
 
 ```
-Frontend_equipo-main/
-├── main.py                 ← API FastAPI (modificar DISPLAY_COLUMNS)
-├── requeriments.txt        ← dependencias Python
+Frontend_equipo/
+├── main.py                          ← API FastAPI (credenciales de la BD)
+├── requeriments.txt                 ← dependencias Python
 ├── database/
-│   └── db_connection.py
+│   └── db_connection.py             ← conexión a PostgreSQL
 ├── repository/
-│   └── article_repository.py
+│   └── article_repository.py        ← consulta de artículos
 ├── pipeline/
-│   └── train.py
+│   └── train.py                     ← entrenamiento del modelo
 ├── vectorizer/
-│   └── NLPRecomender.py
-├── postgresql/
-│   └── tablas.sql          ← ejecutar en psql
-├── csv/
-│   ├── dim_date.csv
-│   ├── dim_feed_tag.csv
-│   └── fact_articles.csv   ← importar con \copy
-└── env/                    ← entorno virtual (creado en Paso 5)
-
-frontend/                   ← carpeta del frontend (abrir en navegador)
-├── index.html
-├── articles.html
-├── styles.css
-└── app.js
+│   └── NLPRecomender.py             ← motor BM25 + embeddings
+├── tests/
+│   └── test_nlp_recomender.py       ← pruebas unitarias
+├── POSTGRES_BD/
+│   ├── create_tables.sql            ← esquema news_dw (Paso 3)
+│   ├── load_data.sql                ← carga de los CSV (Paso 3)
+│   └── CSV/                         ← datos
+├── frontend/
+│   ├── index.html
+│   ├── articles.html
+│   ├── styles.css
+│   ├── app.js
+│   └── SETUP.md                     ← esta guía
+├── mockup/                          ← diseños de la interfaz
+└── myenv/                           ← entorno virtual (Paso 4, no se sube a git)
 ```
