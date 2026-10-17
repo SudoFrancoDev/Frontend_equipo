@@ -18,7 +18,7 @@ from vectorizer.NLPRecomender import NLPRecomender
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-DISPLAY_COLUMNS = ["title", "article_id"]
+DISPLAY_COLUMNS = ["title", "url", "category_name"]
 
 # ─────────────────────────────────────────────
 # Estado global (modelo + datos)
@@ -37,9 +37,9 @@ async def lifespan(app: FastAPI):
     db = PostgreSQLConnection(
         host="localhost",
         port=5432,
-        database="mediumdb",
-        user="postgres",
-        password="root"
+        database="news_dw",
+        user="myuser",
+        password="admin"
     )
     db.connect()
 
@@ -101,7 +101,7 @@ def health():
 def search(req: SearchRequest):
     """
     Busca artículos similares al texto ingresado.
-    Usa TF-IDF para calcular similitud semántica.
+    Usa BM25 (titulo y tags) combinado con embeddings para ordenar por relevancia.
     """
     if model is None:
         raise HTTPException(status_code=503, detail="Modelo no disponible")
@@ -116,8 +116,8 @@ def search(req: SearchRequest):
         raise HTTPException(status_code=500, detail="Error procesando la búsqueda")
 
 
-@app.get("/recommend/{article_id}")
-def recommend(article_id: str, top_n: int = 5):
+@app.get("/recommend/{url:path}")
+def recommend(url: str, top_n: int = 5):
     """
     Retorna artículos similares dado el ID de un artículo base.
     """
@@ -125,8 +125,8 @@ def recommend(article_id: str, top_n: int = 5):
         raise HTTPException(status_code=503, detail="Modelo no disponible")
 
     try:
-        base    = df[df["article_id"] == article_id].iloc[0][DISPLAY_COLUMNS].to_dict()
-        similar = model.recommend_similar(article_id, top_n=top_n)
+        base    = df[df["url"] == url].iloc[0][DISPLAY_COLUMNS].to_dict()
+        similar = model.recommend_similar(url, top_n=top_n)
         return {
             "base_article":    base,
             "recommendations": similar[DISPLAY_COLUMNS].to_dict(orient="records")
@@ -151,25 +151,25 @@ def get_articles(limit: int = 50, offset: int = 0):
     }
 
 
-@app.get("/articles/{article_id}")
-def get_article(article_id: str):
+@app.get("/categories")
+def get_categories(limit: int = 12):
     """
-    Retorna un artículo específico por su article_id de la BD.
+    Retorna las categorías de la BD ordenadas por número de artículos (temas más populares primero).
     """
     if df is None or df.empty:
         raise HTTPException(status_code=503, detail="Datos no disponibles")
 
-    result = df[df["article_id"] == article_id]
-    if result.empty:
-        raise HTTPException(status_code=404, detail=f"Artículo '{article_id}' no encontrado")
+    counts = df["category_name"].value_counts().head(limit)
+    return [
+        {"category_name": name, "total": int(total)}
+        for name, total in counts.items()
+    ]
 
-    return result.iloc[0][DISPLAY_COLUMNS].to_dict()
 
-
-@app.get("/articles/{article_id}/related")
-def get_related_articles(article_id: str, top_n: int = 5):
+@app.get("/articles/{url:path}/related")
+def get_related_articles(url: str, top_n: int = 5):
     """
-    Dado el article_id de un artículo seleccionado por el usuario,
+    Dada la url de un artículo seleccionado por el usuario,
     retorna los artículos más similares usando show_recommendations().
     Se expone como botón 'Ver artículos relacionados' en el frontend.
     """
@@ -179,19 +179,35 @@ def get_related_articles(article_id: str, top_n: int = 5):
         raise HTTPException(status_code=503, detail="Datos no disponibles")
 
     # Buscar el índice del artículo en el DataFrame
-    matches = df[df["article_id"] == article_id]
+    matches = df[df["url"] == url]
     if matches.empty:
-        raise HTTPException(status_code=404, detail=f"Artículo '{article_id}' no encontrado")
+        raise HTTPException(status_code=404, detail=f"Artículo '{url}' no encontrado")
 
 
     try:
-        similar = model.recommend_similar(article_id, top_n=top_n)
-        base    = df[df["article_id"] == article_id].iloc[0][DISPLAY_COLUMNS].to_dict()
+        similar = model.recommend_similar(url, top_n=top_n)
+        base    = df[df["url"] == url].iloc[0][DISPLAY_COLUMNS].to_dict()
 
         return {
             "base_article":    base,
             "related":         similar[DISPLAY_COLUMNS].to_dict(orient="records")
         }
     except Exception as e:
-        logger.error(f"Error en /articles/{article_id}/related: {e}")
+        logger.error(f"Error en /articles/{url}/related: {e}")
         raise HTTPException(status_code=500, detail="Error generando artículos relacionados")
+
+
+@app.get("/articles/{url:path}")
+def get_article(url: str):
+    """
+    Retorna un artículo específico por su url de la BD.
+    Se declara al final porque {url:path} tambien capturaria /articles/{url}/related.
+    """
+    if df is None or df.empty:
+        raise HTTPException(status_code=503, detail="Datos no disponibles")
+
+    result = df[df["url"] == url]
+    if result.empty:
+        raise HTTPException(status_code=404, detail=f"Artículo '{url}' no encontrado")
+
+    return result.iloc[0][DISPLAY_COLUMNS].to_dict()

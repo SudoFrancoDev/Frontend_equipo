@@ -18,7 +18,7 @@
 
   <!-- ════════════ HERO ════════════ -->
   <section class="hero">
-    <span class="hero-eyebrow">Buscador inteligente · TF-IDF + Embeddings</span>
+    <span class="hero-eyebrow">Buscador inteligente · BM25 + Embeddings</span>
     <h1>¿Qué quieres<br><span>descubrir</span> hoy?</h1>
     <p class="hero-sub">Explora miles de artículos con búsqueda semántica inteligente.</p>
 
@@ -63,16 +63,8 @@
         <span></span>Tendencias populares
       </h2>
     </div>
-    <div class="trending-tags">
-      <a class="trend-tag" onclick="goTag('artificial intelligence')">AI</a>
-      <a class="trend-tag" onclick="goTag('productivity')">Productividad</a>
-      <a class="trend-tag" onclick="goTag('programming')">Programación</a>
-      <a class="trend-tag" onclick="goTag('machine learning')">Machine Learning</a>
-      <a class="trend-tag" onclick="goTag('career')">Carrera</a>
-      <a class="trend-tag" onclick="goTag('data science')">Data Science</a>
-      <a class="trend-tag" onclick="goTag('software development')">Desarrollo</a>
-      <a class="trend-tag" onclick="goTag('mental health')">Salud mental</a>
-    </div>
+    <!-- Se llena con las categorías de la BD (GET /categories) -->
+    <div class="trending-tags" id="trending-tags"></div>
   </section>
 
   <script src="app.js"></script>

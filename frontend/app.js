@@ -24,14 +24,14 @@ async function apiPost(path, body) {
   return res.json();
 }
 
-// Extrae una etiqueta legible del feed_tag_name (primera palabra)
+// Extrae una etiqueta legible del category_name (primera palabra)
 function formatTag(raw) {
   if (!raw) return "artículo";
   const first = raw.split(" ")[0];
   return first.length > 16 ? first.slice(0, 14) + "…" : first;
 }
 
-// Acorta una URL larga (article_id) para mostrar en label
+// Acorta una URL larga para mostrar en label
 function shortId(url) {
   try {
     const u = new URL(url);
@@ -60,8 +60,29 @@ if (document.getElementById("slider-track")) {
 }
 
 async function initHome() {
+  loadTrending();
   await loadSlider();
   setupHeroSearch();
+}
+
+// ---- Tendencias (categorías de la BD) ----------------------
+async function loadTrending() {
+  const container = document.getElementById("trending-tags");
+  if (!container) return;
+
+  try {
+    const categories = await apiGet("/categories?limit=12");
+    container.innerHTML = categories.map(c => `
+      <a class="trend-tag" data-tag="${escAttr(c.category_name)}"
+         title="${escAttr(c.total + " artículos")}">${escHtml(c.category_name)}</a>`
+    ).join("");
+    container.querySelectorAll(".trend-tag").forEach(el =>
+      el.addEventListener("click", () => goTag(el.dataset.tag))
+    );
+  } catch (e) {
+    // Sin backend no hay temas que mostrar; el slider ya informa del error
+    container.closest(".trending-section").style.display = "none";
+  }
 }
 
 // ---- Slider ------------------------------------------------
@@ -112,8 +133,8 @@ function renderSlider() {
   const track = document.getElementById("slider-track");
   track.style.transition = "none";
   track.innerHTML = visible.map(a => `
-    <div class="slider-card" onclick="goToArticle('${encodeURIComponent(a.article_id)}', '${encodeURIComponent(a.title || "")}')">
-      <span class="slider-card-tag">${formatTag(a.feed_tag_name)}</span>
+    <div class="slider-card" onclick="goToArticle('${encodeURIComponent(a.url)}', '${encodeURIComponent(a.title || "")}')">
+      <span class="slider-card-tag">${formatTag(a.category_name)}</span>
       <div class="slider-card-title">${a.title || "Sin título"}</div>
       <div class="slider-card-action">Ver similares →</div>
     </div>`
@@ -314,23 +335,23 @@ function renderArticles() {
  
   list.innerHTML = state.articles.map(a => `
     <div class="article-card"
-         id="card-${CSS.escape(a.article_id)}"
-         data-id="${escAttr(a.article_id)}"
+         id="card-${CSS.escape(a.url)}"
+         data-id="${escAttr(a.url)}"
          data-title="${escAttr(a.title || "")}"
          onclick="handleCardClick(this)">
-      <span class="article-tag" title="${escAttr(a.feed_tag_name || "")}">
-        ${formatTag(a.feed_tag_name)}
+      <span class="article-tag" title="${escAttr(a.category_name || "")}">
+        ${formatTag(a.category_name)}
       </span>
       <div class="article-body">
         <div class="article-title">${escHtml(a.title || "Sin título")}</div>
-        <div class="article-id-label">${shortId(a.article_id)}</div>
+        <div class="article-id-label">${shortId(a.url)}</div>
       </div>
       <button class="btn-ver-similares"
               onclick="handleVerSimilares(event, this)">
         Ver similares
       </button>
       <a class="btn-ver-articulo"
-         href="${escAttr(a.article_id)}"
+         href="${escAttr(a.url)}"
          target="_blank"
          rel="noopener noreferrer"
          onclick="event.stopPropagation()">
@@ -449,10 +470,10 @@ async function handleVerSimilares(event, btnEl) {
   btnEl.disabled = true;
 
   try {
-    // Usamos /search con el título como query (compatible con cualquier article_id)
+    // Usamos /search con el título como query (compatible con cualquier url)
     const results = await apiPost("/search", { query: title, top_n: 6 });
     // Filtramos el artículo seleccionado y tomamos los 5 primeros
-    const similar = (results || []).filter(a => a.article_id !== id).slice(0, 5);
+    const similar = (results || []).filter(a => a.url !== id).slice(0, 5);
     renderSimilarSection(title, similar);
   } catch (e) {
     alert("Error al cargar artículos similares: " + e.message);
@@ -487,7 +508,7 @@ function renderSimilarSection(baseTitle, articles) {
     <div class="similar-grid">
       ${articles.map(a => `
         <div class="similar-card">
-          <span class="similar-card-tag">${formatTag(a.feed_tag_name)}</span>
+          <span class="similar-card-tag">${formatTag(a.category_name)}</span>
           <div class="similar-card-title">${escHtml(a.title || "Sin título")}</div>
         </div>`
       ).join("")}
