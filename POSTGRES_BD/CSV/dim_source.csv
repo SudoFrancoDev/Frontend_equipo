@@ -1,0 +1,186 @@
+source_key,source_domain,source_name,valid_from,valid_to,is_current
+1,9to5google.com,9to5Google,2026-08-14 16:20:05+0000,infinity,True
+2,9to5mac.com,9to5Mac,2026-08-03 18:51:00+0000,infinity,True
+3,abc17news.com,ABC17News.com,2026-08-27 17:42:39+0000,infinity,True
+4,abc7.com,KABC-TV,2026-08-27 10:57:01+0000,infinity,True
+5,activistpost.com,Activist Post,2026-08-19 10:00:00+0000,infinity,True
+6,adn.com,Anchorage Daily News,2026-07-30 18:48:53+0000,infinity,True
+7,adweek.com,Adweek,2026-08-26 22:00:00+0000,infinity,True
+8,ajc.com,The Atlanta Journal-Constitution,2026-09-12 21:51:52+0000,infinity,True
+9,akron.com,akron.com,2026-08-20 11:00:16+0000,infinity,True
+10,al-monitor.com,Al-Monitor,2026-09-07 09:08:03+0000,infinity,True
+11,al.com,AL.com,2026-09-17 18:28:11+0000,infinity,True
+12,alligator.org,The Independent Florida Alligator,2026-08-12 13:00:00+0000,infinity,True
+13,americanpress.com,American Press,2026-09-22 11:32:06+0000,infinity,True
+14,amny.com,AM New York,2026-08-31 12:00:14+0000,infinity,True
+15,androidauthority.com,Android Authority,2026-07-27 16:47:28+0000,infinity,True
+16,androidpolice.com,Android Police,2026-08-20 15:15:10+0000,infinity,True
+17,apnews.com,The Associated Press,2026-07-30 20:26:37+0000,infinity,True
+18,arkansasonline.com,Arkansas Online,2026-08-11 23:00:00+0000,infinity,True
+19,arstechnica.com,Ars Technica,2026-08-14 18:00:23+0000,infinity,True
+20,artvoice.com,Artvoice,2026-09-19 15:14:18+0000,infinity,True
+21,aspentimes.com,The Aspen Times,2026-09-24 17:00:00+0000,infinity,True
+22,atlantablackstar.com,Atlanta Black Star,2026-09-21 10:00:00+0000,infinity,True
+23,baltimoresun.com,Baltimore Sun,2026-08-22 08:54:52+0000,infinity,True
+24,barchart.com,Barchart,2026-07-29 17:52:45+0000,infinity,True
+25,bgr.com,BGR,2026-07-31 20:02:00+0000,infinity,True
+26,billboard.com,Billboard,2026-08-25 03:57:27+0000,infinity,True
+27,bitcoinmagazine.com,Bitcoin Magazine,2026-09-02 16:44:04+0000,infinity,True
+28,boston.com,Boston.com,2026-08-26 20:28:32+0000,infinity,True
+29,bostonglobe.com,The Boston Globe,2026-08-22 18:20:56+0000,infinity,True
+30,bostonherald.com,The Boston Herald,2026-08-21 22:48:32+0000,infinity,True
+31,breakingdefense.com,Breaking Defense,2026-08-20 19:55:53+0000,infinity,True
+32,breitbart.com,Breitbart News Network,2026-07-31 10:42:09+0000,infinity,True
+33,buffalonews.com,Buffalo Buffalo News,2026-08-26 05:00:00+0000,infinity,True
+34,businessinsider.com,Business Insider,2026-07-30 12:34:19+0000,infinity,True
+35,buzzfeed.com,BuzzFeed,2026-08-17 20:39:08+0000,infinity,True
+36,cbsnews.com,CBS News,2026-07-29 15:00:14+0000,infinity,True
+37,chicagotribune.com,Chicago Tribune,2026-08-20 20:58:53+0000,infinity,True
+38,cleveland.com,cleveland.com,2026-09-19 19:57:49+0000,infinity,True
+39,clickondetroit.com,WDIV ClickOnDetroit,2026-07-30 20:26:36+0000,infinity,True
+40,cnbc.com,CNBC,2026-07-30 11:30:01+0000,infinity,True
+41,cnet.com,CNET,2026-08-07 12:02:13+0000,infinity,True
+42,coindesk.com,CoinDesk,2026-09-14 14:34:56+0000,infinity,True
+43,cointelegraph.com,Cointelegraph,2026-08-13 01:00:57+0000,infinity,True
+44,courant.com,Hartford Courant,2026-08-24 09:30:59+0000,infinity,True
+45,cryptoslate.com,CryptoSlate,2026-08-12 10:45:50+0000,infinity,True
+46,cultofmac.com,Cult of Mac,2026-08-05 13:00:40+0000,infinity,True
+47,dailycamera.com,Boulder Daily Camera,2026-09-02 11:11:41+0000,infinity,True
+48,deadline.com,Deadline,2026-08-24 21:47:25+0000,infinity,True
+49,decrypt.co,Decrypt,2026-08-13 17:47:12+0000,infinity,True
+50,defensenews.com,DefenseNews.com,2026-07-30 20:17:51+0000,infinity,True
+51,democratandchronicle.com,Rochester Democrat and Chronicle,2026-09-15 16:54:08+0000,infinity,True
+52,denverpost.com,The Denver Post,2026-09-17 01:25:38+0000,infinity,True
+53,deseret.com,Salt Lake City Deseret News,2026-08-27 21:25:38+0000,infinity,True
+54,diariolasamericas.com,Diario Las Américas,2026-09-26 20:10:00+0000,infinity,True
+55,edition.cnn.com,Cable News Network,2026-08-06 12:01:14+0000,infinity,True
+56,engadget.com,Engadget,2026-08-10 21:48:44+0000,infinity,True
+57,enn.com,Environmental News Network,2026-09-10 23:36:02+0000,infinity,True
+58,entrepreneur.com,Entrepreneur,2026-08-14 18:00:00+0000,infinity,True
+59,espn.com,ESPN,2026-08-22 16:30:44+0000,infinity,True
+60,eu.news-press.com,News-Press,2026-09-19 10:03:17+0000,infinity,True
+61,europesays.com,EUROPE SAYS,2026-07-26 19:45:17+0000,infinity,True
+62,forbes.com,Forbes,2026-07-31 14:10:35+0000,infinity,True
+63,fortune.com,Fortune,2026-07-28 07:00:00+0000,infinity,True
+64,fox4news.com,FOX 4 News,2026-08-06 15:33:19+0000,infinity,True
+65,fox9.com,FOX 9,2026-08-27 02:53:48+0000,infinity,True
+66,foxbaltimore.com,Baltimore News,2026-08-20 18:30:09+0000,infinity,True
+67,foxbusiness.com,Fox Business,2026-08-26 20:27:59+0000,infinity,True
+68,foxnews.com,Fox News,2026-08-10 23:00:59+0000,infinity,True
+69,foxweather.com,FOX Weather,2026-09-03 01:09:02+0000,infinity,True
+70,freightwaves.com,FreightWaves,2026-07-29 15:06:19+0000,infinity,True
+71,gainesville.com,Gainesville Sun,2026-08-23 16:45:00+0000,infinity,True
+72,gamesradar.com,GamesRadar+,2026-08-14 11:34:10+0000,infinity,True
+73,gizmodo.com,Gizmodo,2026-08-18 17:15:36+0000,infinity,True
+74,globenewswire.com,GlobeNewswire,2026-08-03 09:00:00+0000,infinity,True
+75,goerie.com,Erie Times-News,2026-09-18 08:56:21+0000,infinity,True
+76,greenbaypressgazette.com,Green Bay Press-Gazette,2026-09-15 10:08:29+0000,infinity,True
+77,heraldtribune.com,Herald-Tribune,2026-08-13 21:22:12+0000,infinity,True
+78,hollywoodreporter.com,The Hollywood Reporter,2026-08-31 19:36:54+0000,infinity,True
+79,hothardware.com,Hot Hardware,2026-08-06 20:13:00+0000,infinity,True
+80,huffpost.com,HuffPost,2026-08-07 11:00:18+0000,infinity,True
+81,ibtimes.com,International Business Times,2026-08-03 17:02:06+0000,infinity,True
+82,inquirer.com,The Philadelphia Inquirer,2026-07-30 09:01:01+0000,infinity,True
+83,interestingengineering.com,Interesting Engineering,2026-07-26 07:56:59+0000,infinity,True
+84,invenglobal.com,InvenGlobal,2026-08-13 06:21:13+0000,infinity,True
+85,journalstar.com,Lincoln Journal Star,2026-09-17 05:00:00+0000,infinity,True
+86,kdhlradio.com,kdhlradio.com,2026-08-31 13:48:02+0000,infinity,True
+87,kiplinger.com,Kiplinger,2026-08-23 14:10:00+0000,infinity,True
+88,krdo.com,KRDO,2026-09-07 21:50:43+0000,infinity,True
+89,latimes.com,Los Angeles Times,2026-08-05 13:32:42+0000,infinity,True
+90,lawfaremedia.org,Lawfare,2026-08-21 08:00:00+0000,infinity,True
+91,lifehacker.com,Lifehacker,2026-09-14 12:30:00+0000,infinity,True
+92,live5news.com,Live 5 News WCSC,2026-08-20 07:24:14+0000,infinity,True
+93,lohud.com,White Plains Journal News,2026-08-26 08:05:41+0000,infinity,True
+94,macrumors.com,MacRumors,2026-08-06 00:10:18+0000,infinity,True
+95,markets.businessinsider.com,Markets Insider,2026-07-26 13:06:23+0000,infinity,True
+96,mercurynews.com,The Mercury News,2026-07-31 12:40:01+0000,infinity,True
+97,mlb.com,MLB News,2026-09-26 04:32:15+0000,infinity,True
+98,nationalgeographic.com,National Geographic,2026-09-16 11:00:00+0000,infinity,True
+99,naturalnews.com,Natural News,2026-08-02 17:10:19+0000,infinity,True
+100,nbcboston.com,NBC10 Boston,2026-09-25 04:58:20+0000,infinity,True
+101,nbcchicago.com,NBC 5 Chicago,2026-09-17 21:49:16+0000,infinity,True
+102,nbcnews.com,NBC News,2026-08-22 10:40:00+0000,infinity,True
+103,nbcsports.com,Nbc Sports,2026-08-27 11:00:00+0000,infinity,True
+104,news-leader.com,Springfield News-Leader,2026-09-04 08:48:11+0000,infinity,True
+105,news.bloombergtax.com,Bloomberg Tax News,2026-08-24 08:30:06+0000,infinity,True
+106,newsbreak.com,NewsBreak,2026-08-11 01:41:46+0000,infinity,True
+107,newsweek.com,Newsweek,2026-07-30 08:14:55+0000,infinity,True
+108,newyorker.com,The New Yorker,2026-07-28 10:00:00+0000,infinity,True
+109,npr.org,NPR,2026-08-20 22:47:40+0000,infinity,True
+110,nydailynews.com,New York Daily News,2026-09-01 22:17:00+0000,infinity,True
+111,nymag.com,New York Magazine,2026-09-18 10:00:26+0000,infinity,True
+112,nypost.com,New York Post,2026-07-28 08:30:10+0000,infinity,True
+113,ocregister.com,Santa Ana Orange County Register,2026-08-27 21:40:47+0000,infinity,True
+114,oilprice.com,OilPrice,2026-08-19 17:30:00+0000,infinity,True
+115,oregonlive.com,The Oregonian,2026-09-15 16:51:02+0000,infinity,True
+116,patch.com,"Joliet, IL Patch",2026-09-10 20:31:38+0000,infinity,True
+117,pbs.org,PBS News,2026-08-20 15:21:18+0000,infinity,True
+118,pennlive.com,Mechanicsburg Patriot News,2026-08-29 13:00:00+0000,infinity,True
+119,petapixel.com,PetaPixel,2026-08-22 23:39:32+0000,infinity,True
+120,pilotonline.com,Norfolk Virginian-Pilot,2026-07-28 12:29:02+0000,infinity,True
+121,polygon.com,Polygon,2026-08-18 16:42:04+0000,infinity,True
+122,postandcourier.com,Charleston Post and Courier,2026-08-23 21:15:00+0000,infinity,True
+123,pressdemocrat.com,Santa Rosa Press Democrat,2026-08-21 17:19:18+0000,infinity,True
+124,pressofatlanticcity.com,Press of Atlantic City,2026-08-21 18:27:00+0000,infinity,True
+125,protos.com,Protos,2026-08-31 18:51:54+0000,infinity,True
+126,qctimes.com,Davenport Quad-City Times,2026-09-03 13:45:00+0000,infinity,True
+127,rawstory.com,Raw Story,2026-09-11 02:02:41+0000,infinity,True
+128,readingeagle.com,Reading Eagle,2026-08-27 10:05:21+0000,infinity,True
+129,rubberworld.com,RubberWorld,2026-08-17 07:03:00+0000,infinity,True
+130,salon.com,Salon,2026-09-16 10:30:13+0000,infinity,True
+131,sandiegouniontribune.com,San Diego Union-Tribune,2026-09-11 21:54:54+0000,infinity,True
+132,sciencedaily.com,ScienceDaily,2026-07-26 00:00:00+0000,infinity,True
+133,scientific-computing.com,Scientific Computing World,2026-07-27 14:35:58+0000,infinity,True
+134,scientificamerican.com,Scientific American,2026-08-25 11:40:00+0000,infinity,True
+135,seekingalpha.com,Seeking Alpha,2026-07-31 18:18:36+0000,infinity,True
+136,shawlocal.com,Shaw Local Enewspapers,2026-07-28 01:31:06+0000,infinity,True
+137,si.com,Sports Illustrated,2026-08-03 14:17:48+0000,infinity,True
+138,siliconangle.com,SiliconANGLE News,2026-07-27 03:24:03+0000,infinity,True
+139,simpleflying.com,Simple Flying,2026-07-26 14:00:11+0000,infinity,True
+140,siouxcityjournal.com,Sioux City Journal,2026-09-05 19:45:00+0000,infinity,True
+141,slashgear.com,SlashGear,2026-07-29 19:45:00+0000,infinity,True
+142,slate.com,Slate,2026-09-27 09:45:00+0000,infinity,True
+143,sltrib.com,Salt Lake Tribune,2026-09-20 12:00:01+0000,infinity,True
+144,snopes.com,Snopes.com,2026-08-30 06:00:11+0000,infinity,True
+145,socialmediatoday.com,Social Media Today,2026-08-30 19:24:04+0000,infinity,True
+146,space.com,Space.com,2026-09-07 13:00:00+0000,infinity,True
+147,spokesman.com,Spokane Spokesman-Review,2026-08-10 05:16:00+0000,infinity,True
+148,statnews.com,STAT,2026-08-24 08:30:00+0000,infinity,True
+149,stltoday.com,St. Louis Post-Dispatch,2026-09-18 11:00:00+0000,infinity,True
+150,syracuse.com,syracuse.com,2026-09-14 14:30:00+0000,infinity,True
+151,tcpalm.com,TCPalm,2026-09-08 17:49:41+0000,infinity,True
+152,techcrunch.com,TechCrunch,2026-08-03 20:00:00+0000,infinity,True
+153,technologyreview.com,MIT Technology Review,2026-08-10 09:00:00+0000,infinity,True
+154,techspot.com,TechSpot,2026-09-02 06:07:58+0000,infinity,True
+155,techstartups.com,TechStartups.com,2026-07-27 16:38:34+0000,infinity,True
+156,theadvocate.com,Baton Rouge Advocate,2026-07-27 12:00:00+0000,infinity,True
+157,thedailybeast.com,The Daily Beast,2026-08-27 09:41:43+0000,infinity,True
+158,thegatewaypundit.com,The Gateway Pundit,2026-09-09 02:40:28+0000,infinity,True
+159,thehackernews.com,The Hacker News,2026-08-03 10:49:00+0000,infinity,True
+160,theintercept.com,The Intercept,2026-09-08 10:00:00+0000,infinity,True
+161,theverge.com,The Verge,2026-08-13 16:10:06+0000,infinity,True
+162,time.com,TIME,2026-09-09 11:00:03+0000,infinity,True
+163,tmz.com,TMZ,2026-08-20 15:53:55+0000,infinity,True
+164,today.com,TODAY,2026-09-17 11:54:20+0000,infinity,True
+165,tomsguide.com,Tom's Guide,2026-08-14 06:00:00+0000,infinity,True
+166,twincities.com,St. Paul Pioneer Press,2026-09-03 10:36:19+0000,infinity,True
+167,ubergizmo.com,Ubergizmo,2026-07-31 16:56:27+0000,infinity,True
+168,usaherald.com,USA Herald,2026-09-02 15:17:30+0000,infinity,True
+169,usatoday.com,USA TODAY,2026-08-30 10:04:05+0000,infinity,True
+170,variety.com,Variety,2026-08-17 13:38:44+0000,infinity,True
+171,vcstar.com,Ventura County Star,2026-09-10 10:14:20+0000,infinity,True
+172,vice.com,VICE,2026-07-27 12:46:25+0000,infinity,True
+173,washingtonexaminer.com,Washington Examiner,2026-08-11 15:16:39+0000,infinity,True
+174,wbrz.com,WBRZ,2026-09-06 00:00:00+0000,infinity,True
+175,wccftech.com,Wccftech,2026-07-31 23:52:36+0000,infinity,True
+176,wdwnt.com,wdwnt.com,2026-09-19 14:30:00+0000,infinity,True
+177,weau.com,WEAU,2026-08-28 18:45:05+0000,infinity,True
+178,wired.com,WIRED,2026-08-05 16:00:00+0000,infinity,True
+179,wistv.com,WIS10,2026-08-26 21:45:05+0000,infinity,True
+180,wjla.com,WJLA,2026-09-01 21:35:17+0000,infinity,True
+181,wtop.com,WTOP,2026-08-19 15:43:42+0000,infinity,True
+182,xda-developers.com,XDA Developers,2026-07-26 11:30:10+0000,infinity,True
+183,yardbarker.com,Yardbarker,2026-08-05 21:10:56+0000,infinity,True
+184,zdnet.com,ZDNet,2026-08-03 06:50:00+0000,infinity,True
+185,zerohedge.com,ZeroHedge,2026-09-08 02:50:00+0000,infinity,True

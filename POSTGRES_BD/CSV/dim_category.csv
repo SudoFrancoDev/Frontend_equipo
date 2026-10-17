@@ -1,0 +1,64 @@
+category_key,category_code,category_name
+1,3d_printing_technology,3D Printing Technology
+2,5g_technology,5G Technology
+3,aerodynamics,Aerodynamics
+4,aerospace_materials,Aerospace Materials
+5,air_traffic_control_technology,Air Traffic Control Technology
+6,aircraft_design,Aircraft Design
+7,aircraft_maintenance,Aircraft Maintenance
+8,aircraft_manufacturing,Aircraft Manufacturing
+9,artificial_intelligence,Artificial Intelligence
+10,autonomous_mobile_robots,Autonomous Mobile Robots
+11,autonomous_vehicles,Autonomous Vehicles
+12,avionics_systems,Avionics Systems
+13,aws,Aws
+14,battery_technology,Battery Technology
+15,blockchain,Blockchain
+16,chip_design,Chip Design
+17,cloud_computing,Cloud Computing
+18,collaborative_robots_cobots,Collaborative Robots Cobots
+19,commercial_aviation_industry,Commercial Aviation Industry
+20,computer_vision,Computer Vision
+21,cybersecurity,Cybersecurity
+22,data_engineering,Data Engineering
+23,data_science,Data Science
+24,databases,Databases
+25,deep_learning,Deep Learning
+26,devops,Devops
+27,docker,Docker
+28,drone_technology,Drone Technology
+29,electric_aircraft,Electric Aircraft
+30,electric_vehicle_technology,Electric Vehicle Technology
+31,embedded_systems,Embedded Systems
+32,generative_ai,Generative Ai
+33,google_cloud,Google Cloud
+34,humanoid_robots,Humanoid Robots
+35,industrial_automation,Industrial Automation
+36,internet_of_things,Internet Of Things
+37,iot_devices,Iot Devices
+38,kubernetes,Kubernetes
+39,large_language_models,Large Language Models
+40,machine_learning,Machine Learning
+41,machine_vision_systems,Machine Vision Systems
+42,microcontrollers,Microcontrollers
+43,microsoft_azure,Microsoft Azure
+44,military_aircraft,Military Aircraft
+45,postgresql,Postgresql
+46,power_electronics,Power Electronics
+47,propulsion_systems,Propulsion Systems
+48,python_programming,Python Programming
+49,quantum_computing,Quantum Computing
+50,quantum_computing_hardware,Quantum Computing Hardware
+51,robotic_arms,Robotic Arms
+52,robotics,Robotics
+53,robotics_electronics,Robotics Electronics
+54,satellite_technology,Satellite Technology
+55,semiconductor_manufacturing,Semiconductor Manufacturing
+56,sensor_technology,Sensor Technology
+57,smart_manufacturing,Smart Manufacturing
+58,software_engineering,Software Engineering
+59,space_launch_systems,Space Launch Systems
+60,supersonic_flight,Supersonic Flight
+61,swarm_robotics,Swarm Robotics
+62,unmanned_aerial_vehicles,Unmanned Aerial Vehicles
+63,wind_tunnel_testing,Wind Tunnel Testing
