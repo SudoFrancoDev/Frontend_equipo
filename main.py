@@ -1,4 +1,5 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 
 
@@ -11,6 +12,7 @@ from database.db_connection import PostgreSQLConnection
 from repository.article_repository import ArticleRepository
 from pipeline.train import train_model, show_recommendations
 from vectorizer.NLPRecomender import NLPRecomender
+from teaser.teaser_model import TeaserModel, InvalidInputError, TeaserGenerationError
 
 # ─────────────────────────────────────────────
 # Logging
@@ -25,13 +27,15 @@ DISPLAY_COLUMNS = ["title", "url", "category_name"]
 # ─────────────────────────────────────────────
 model: NLPRecomender = None
 df: pd.DataFrame = None
+repo: ArticleRepository = None
+teaser_model: TeaserModel = None
 
 # ─────────────────────────────────────────────
 # Startup / Shutdown
 # ─────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global model, df
+    global model, df, repo, teaser_model
 
     # ── Conectar a PostgreSQL local ────────────
     db = PostgreSQLConnection(
@@ -50,6 +54,14 @@ async def lifespan(app: FastAPI):
 
     model = train_model(df)
     logger.info("Modelo NLP entrenado y listo")
+
+    # ── Modelo de teaser (SageMaker) ───────────
+    endpoint_name = os.getenv("TEASER_ENDPOINT_NAME")
+    if endpoint_name:
+        teaser_model = TeaserModel(endpoint_name, region_name=os.getenv("AWS_REGION", "us-east-1"))
+        logger.info(f"Teaser habilitado con el endpoint '{endpoint_name}'")
+    else:
+        logger.warning("TEASER_ENDPOINT_NAME no definido: /articles/{url}/teaser no estará disponible")
 
     yield  # API corriendo
 
@@ -164,6 +176,33 @@ def get_categories(limit: int = 12):
         {"category_name": name, "total": int(total)}
         for name, total in counts.items()
     ]
+
+
+@app.get("/articles/{url:path}/teaser")
+def get_article_teaser(url: str):
+    """
+    Genera el resumen (teaser) del artículo con el modelo Qwen3 desplegado en SageMaker.
+    Lo llama el botón 'Ver resumen' de cada card.
+    """
+    if teaser_model is None:
+        raise HTTPException(status_code=503, detail="El resumen con IA no está configurado")
+    if df is None or df.empty:
+        raise HTTPException(status_code=503, detail="Datos no disponibles")
+    if df[df["url"] == url].empty:
+        raise HTTPException(status_code=404, detail=f"Artículo '{url}' no encontrado")
+
+    input_text = repo.get_input_text(url)
+    if input_text is None:
+        raise HTTPException(status_code=404, detail="El artículo no tiene texto para resumir")
+
+    try:
+        return {"url": url, "teaser": teaser_model.generate(input_text)}
+    except InvalidInputError as e:
+        logger.error(f"Texto no válido para el teaser de {url}: {e}")
+        raise HTTPException(status_code=422, detail="El texto del artículo no se puede resumir")
+    except TeaserGenerationError as e:
+        logger.error(f"Error generando el teaser de {url}: {e}")
+        raise HTTPException(status_code=502, detail="El modelo no pudo generar el resumen")
 
 
 @app.get("/articles/{url:path}/related")

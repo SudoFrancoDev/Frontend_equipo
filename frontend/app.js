@@ -10,7 +10,11 @@ const API = "http://localhost:8000";
 ──────────────────────────────────────────────────────────── */
 async function apiGet(path) {
   const res = await fetch(API + path);
-  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  if (!res.ok) {
+    // FastAPI envía el motivo del error en "detail"
+    const detail = await res.json().then(d => d.detail).catch(() => null);
+    throw new Error(detail || `Error ${res.status}: ${res.statusText}`);
+  }
   return res.json();
 }
 
@@ -350,6 +354,10 @@ function renderArticles() {
               onclick="handleVerSimilares(event, this)">
         Ver similares
       </button>
+      <button class="btn-ver-resumen"
+              onclick="handleVerResumen(event, this)">
+        ✦ Ver resumen
+      </button>
       <a class="btn-ver-articulo"
          href="${escAttr(a.url)}"
          target="_blank"
@@ -357,6 +365,7 @@ function renderArticles() {
          onclick="event.stopPropagation()">
         Ver artículo ↗
       </a>
+      <div class="article-teaser" hidden onclick="event.stopPropagation()"></div>
     </div>`
   ).join("");
 }
@@ -480,6 +489,43 @@ async function handleVerSimilares(event, btnEl) {
   } finally {
     btnEl.textContent = "Ver similares";
     btnEl.style.opacity = "";
+    btnEl.disabled = false;
+  }
+}
+
+// ---- Ver resumen (teaser generado con IA) -----------------
+async function handleVerResumen(event, btnEl) {
+  event.stopPropagation();
+
+  const card = btnEl.closest(".article-card");
+  const box  = card.querySelector(".article-teaser");
+
+  // Si el resumen ya se generó, el botón solo lo muestra u oculta
+  if (box.dataset.loaded) {
+    box.hidden = !box.hidden;
+    btnEl.textContent = box.hidden ? "✦ Ver resumen" : "Ocultar resumen";
+    return;
+  }
+
+  btnEl.disabled = true;
+  btnEl.textContent = "Generando…";
+  box.hidden = false;
+  box.innerHTML = `
+    <div class="loading-dots"><span></span><span></span><span></span></div>
+    <p class="teaser-status">Generando resumen con IA…</p>`;
+
+  try {
+    // Cada botón pide el resumen de su propio artículo (url guardada en data-id)
+    const data = await apiGet(`/articles/${encodeURIComponent(card.dataset.id)}/teaser`);
+    box.innerHTML = `
+      <span class="teaser-label">✦ Resumen generado con IA</span>
+      <p class="teaser-text">${escHtml(data.teaser)}</p>`;
+    box.dataset.loaded = "true";
+    btnEl.textContent = "Ocultar resumen";
+  } catch (e) {
+    box.innerHTML = `<p class="teaser-status teaser-error">No se pudo generar el resumen: ${escHtml(e.message)}</p>`;
+    btnEl.textContent = "✦ Reintentar resumen";
+  } finally {
     btnEl.disabled = false;
   }
 }

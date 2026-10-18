@@ -1,0 +1,28 @@
+# Entorno virtual
+myenv/
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Variables de entorno / secretos
+.env
+.env.*
+
+# Modelo (demasiado pesado para git: ~148 MB)
+qwen_model/
+
+# Tests
+tests/
+
+# Editor / sistema operativo
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

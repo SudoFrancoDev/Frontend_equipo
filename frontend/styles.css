@@ -601,6 +601,66 @@ body::before {
   transform: scale(1.04);
 }
 
+.btn-ver-resumen {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  background: var(--accent-glow);
+  border: 1px solid var(--border-sel);
+  border-radius: 50px;
+  color: var(--tag-text);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all var(--tr);
+  white-space: nowrap;
+}
+.btn-ver-resumen:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.btn-ver-resumen:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* Resumen dentro de la card: ocupa una fila completa bajo el título */
+.article-card:has(.article-teaser:not([hidden])) { flex-wrap: wrap; }
+
+.article-teaser {
+  flex-basis: 100%;
+  margin-top: 4px;
+  padding: 14px 16px;
+  background: var(--bg-similar);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: default;
+}
+.article-teaser[hidden] { display: none; }
+
+.teaser-label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--tag-text);
+  margin-bottom: 8px;
+}
+
+.teaser-text {
+  color: var(--text-soft);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.teaser-status {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
+.teaser-error { color: #f87171; margin-top: 0; }
+
 .btn-ver-articulo {
   flex-shrink: 0;
   padding: 8px 16px;

@@ -44,12 +44,13 @@ class PostgreSQLConnection:
             print("Conexión cerrada.")
 
 
-    def query_to_dataframe(self, query: str) -> pd.DataFrame:
+    def query_to_dataframe(self, query: str, params=None) -> pd.DataFrame:
         """
         Ejecuta una consulta SQL y devuelve el resultado como un DataFrame de pandas.
+        params se pasa al driver para consultas parametrizadas (%s), sin concatenar valores en el SQL.
         """
         if not self.connection:
             raise Exception("No hay conexión a la base de datos.")
 
 
-        return pd.read_sql(query, self.connection)
+        return pd.read_sql(query, self.connection, params=params)
