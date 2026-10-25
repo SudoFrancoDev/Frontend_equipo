@@ -204,7 +204,7 @@ Frontend_equipo/
 ├── vectorizer/NLPRecomender.py   Motor de búsqueda BM25 + embeddings
 ├── tests/                        Pruebas unitarias
 ├── POSTGRES_BD/                  Esquema, script de carga y CSV de la base news_dw
-├── frontend/                     index.html, articles.html, app.js, styles.css, SETUP.md
+├── frontend/                     DATARA: index.html, resultados.html, informacion.html, script.js, assets/
 └── mockup/                       Diseños de la interfaz
 ```
 

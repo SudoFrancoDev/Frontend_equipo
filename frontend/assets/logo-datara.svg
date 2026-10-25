@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 100" role="img" aria-label="DATARA">
+  <defs>
+    <linearGradient id="dg" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#06B6D4"/>
+    </linearGradient>
+  </defs>
+  <g stroke="url(#dg)" stroke-width="6" fill="#FFFFFF">
+    <path d="M50 50 L15 27 M50 50 L15 68 M50 50 L65 84 M50 50 L85 54 M50 50 L76 16"/>
+    <circle cx="15" cy="27" r="7"/><circle cx="15" cy="68" r="7"/><circle cx="65" cy="84" r="7"/>
+    <circle cx="85" cy="54" r="6"/><circle cx="76" cy="16" r="7"/>
+    <circle cx="50" cy="50" r="15"/>
+  </g>
+  <circle cx="50" cy="50" r="5.5" fill="#2563EB"/>
+  <g transform="translate(116 33)" fill="none" stroke="#0B1F44" stroke-width="4">
+    <path d="M2 2 H12 A15 15 0 0 1 12 32 H2 Z"/>
+    <path d="M34 32 L48 2 L62 32"/>
+    <path d="M66 2 H88 M77 2 V32"/>
+    <path d="M90 32 L104 2 L118 32"/>
+    <path d="M126 32 V2 H138 A8 8 0 0 1 138 18 H126 M136 18 L146 32"/>
+    <path d="M150 32 L164 2 L178 32"/>
+  </g>
+</svg>

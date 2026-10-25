@@ -170,10 +170,13 @@ Y abre **http://localhost:5500/index.html**.
 > También funciona abriendo `index.html` con doble clic, pero se recomienda el servidor local para evitar restricciones del navegador con archivos `file://`.
 
 **Páginas:**
-- `index.html` → buscador, slider de artículos destacados y tendencias populares (categorías de la BD)
-- `articles.html` → listado completo con búsqueda, paginación y "Ver similares"
+- `index.html` → buscador, temas populares (categorías de la BD) y 3 artículos destacados
+- `resultados.html` → búsqueda (`?q=`), artículos similares (`?similar=`) o exploración de todos los artículos con "Cargar más"; filtro por categoría
+- `informacion.html` → presentación del proyecto, tecnologías y equipo
 
-El frontend llama a la API en `http://localhost:8000` (constante `API` al inicio de `app.js`).
+Cada tarjeta tiene "Generar resumen" (modelo Qwen3 + LoRA), "Ver similares" e "Ir al artículo".
+
+El frontend llama a la API en `http://localhost:8000` en local y a `/api` publicado en CloudFront (`config.js`).
 
 ---
 
@@ -245,10 +248,9 @@ Frontend_equipo/
 │   ├── load_data.sql                ← carga de los CSV (Paso 3)
 │   └── CSV/                         ← datos
 ├── frontend/
-│   ├── index.html
-│   ├── articles.html
-│   ├── styles.css
-│   ├── app.js
+│   ├── index.html · resultados.html · informacion.html
+│   ├── script.js · config.js · styles.css
+│   ├── assets/                      ← logo, iconos de tecnologías y fotos del equipo
 │   └── SETUP.md                     ← esta guía
 ├── mockup/                          ← diseños de la interfaz
 └── myenv/                           ← entorno virtual (Paso 4, no se sube a git)

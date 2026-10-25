@@ -5,10 +5,7 @@ import boto3
 from botocore.exceptions import BotoCoreError, ClientError
 
 
-# Instruccion usada en el ajuste fino (qwen_model/train_config.json -> "instruction")
-DEFAULT_INSTRUCTION = "Summarize the following text in one paragraph of complete sentences."
-
-# Bloque de razonamiento de Qwen3 que puede aparecer al inicio de la respuesta
+# Bloque de razonamiento de Qwen3 por si aparece en la respuesta
 THINK_PATTERN = re.compile(r"<think>.*?</think>", re.DOTALL)
 
 
@@ -27,19 +24,19 @@ class TeaserGenerationError(TeaserError):
 class TeaserModel:
     """
     Genera el teaser (avance) de un articulo invocando el endpoint de SageMaker
-    donde esta desplegado Qwen3-1.7B con los pesos LoRA integrados.
+    donde esta desplegado Qwen3-1.7B con los pesos LoRA integrados (qwen_model/deploy.py).
+
+    El servidor (qwen_model/code/inference.py) arma el prompt con la instruccion del entrenamiento,
+    recorta a max_input_tokens y genera con decodificacion greedy:
+        peticion  {"text": "<input_text>"}
+        respuesta {"summary", "input_tokens", "output_tokens", "input_clipped", "cut_off", "generation_s"}
     """
 
     def __init__(
             self,
-            endpoint_name: str,
+            endpoint_name: str = "summarizer-lora",
             region_name="us-east-1",
             max_input_chars=5500,
-            max_new_tokens=400,
-            temperature=0.7,
-            top_p=0.8,
-            top_k=20,
-            instruction=DEFAULT_INSTRUCTION,
             client=None
     ):
         if not endpoint_name:
@@ -52,14 +49,6 @@ class TeaserModel:
         # 5500 caracteres ~ 1100 tokens con la proporcion mediana (~5 caracteres/token) del corpus
         self.max_input_chars = max_input_chars
 
-        # max_new_tokens=400 coincide con max_target_tokens del entrenamiento;
-        # temperature/top_p/top_k son los valores recomendados para Qwen3 sin razonamiento
-        self.max_new_tokens = max_new_tokens
-        self.temperature = temperature
-        self.top_p = top_p
-        self.top_k = top_k
-        self.instruction = instruction
-
         self.client = client or boto3.client("sagemaker-runtime", region_name=region_name)
 
 
@@ -70,9 +59,8 @@ class TeaserModel:
         """
         self.validate_input(input_text)
 
-        prompt = self.build_prompt(input_text)
-        body = self._invoke(self.build_payload(prompt))
-        return self.parse_response(body, prompt)
+        body = self._invoke(self.build_payload(input_text))
+        return self.parse_response(body)
 
 
     def validate_input(self, input_text: str) -> None:
@@ -89,36 +77,12 @@ class TeaserModel:
             )
 
 
-    def build_prompt(self, input_text: str) -> str:
+    @staticmethod
+    def build_payload(input_text: str) -> dict:
         """
-        Prompt en formato ChatML de Qwen3 con el razonamiento desactivado
-        (equivalente a apply_chat_template(..., enable_thinking=False)).
-        Se arma aqui para no depender de la plantilla de chat del contenedor.
+        Cuerpo que espera input_fn de qwen_model/code/inference.py.
         """
-        user_message = f"{self.instruction}\n\n{input_text.strip()}"
-        return (
-            f"<|im_start|>user\n{user_message}<|im_end|>\n"
-            "<|im_start|>assistant\n<think>\n\n</think>\n\n"
-        )
-
-
-    def build_payload(self, prompt: str) -> dict:
-        """
-        Cuerpo de la peticion en el formato {"inputs", "parameters"} que aceptan
-        los contenedores de generacion de texto de SageMaker (TGI / LMI).
-        """
-        return {
-            "inputs": prompt,
-            "parameters": {
-                "max_new_tokens": self.max_new_tokens,
-                "do_sample": True,
-                "temperature": self.temperature,
-                "top_p": self.top_p,
-                "top_k": self.top_k,
-                "return_full_text": False,
-                "stop": ["<|im_end|>"],
-            },
-        }
+        return {"text": input_text.strip()}
 
 
     def _invoke(self, payload: dict):
@@ -143,24 +107,23 @@ class TeaserModel:
 
 
     @staticmethod
-    def parse_response(body, prompt: str = "") -> str:
+    def parse_response(body) -> str:
         """
-        Extrae el texto generado de las formas de respuesta habituales:
-        [{"generated_text": ...}] (TGI) o {"generated_text": ...} (LMI).
-        Quita el prompt si el contenedor lo repite, el bloque <think> y los tokens de fin.
+        Extrae "summary" de la respuesta de output_fn y quita un posible bloque <think>.
+        Acepta tambien ["<json>", "application/json"]: lo que devuelve el contenedor de Hugging Face
+        cuando output_fn retorna una tupla (version de inference.py desplegada en summarizer-lora).
         """
-        if isinstance(body, list) and body:
-            body = body[0]
-        text = body.get("generated_text") if isinstance(body, dict) else None
+        if isinstance(body, list) and body and isinstance(body[0], str):
+            try:
+                body = json.loads(body[0])
+            except ValueError as e:
+                raise TeaserGenerationError("El endpoint devolvio una lista sin JSON valido.") from e
+
+        text = body.get("summary") if isinstance(body, dict) else None
         if not isinstance(text, str):
-            raise TeaserGenerationError(f"Respuesta del endpoint sin 'generated_text': {str(body)[:200]}")
+            raise TeaserGenerationError(f"Respuesta del endpoint sin 'summary': {str(body)[:200]}")
 
-        if prompt and text.startswith(prompt):
-            text = text[len(prompt):]
-
-        text = THINK_PATTERN.sub("", text)
-        text = text.replace("<|im_end|>", "").replace("<|endoftext|>", "").strip()
-
+        text = THINK_PATTERN.sub("", text).strip()
         if not text:
             raise TeaserGenerationError("El endpoint devolvio un teaser vacio.")
         return text

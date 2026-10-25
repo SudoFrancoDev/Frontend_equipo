@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 
 import pandas as pd
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -23,6 +23,41 @@ logger = logging.getLogger(__name__)
 DISPLAY_COLUMNS = ["title", "url", "category_name"]
 
 # ─────────────────────────────────────────────
+# Configuración (variables de entorno)
+# Los valores por defecto son los del entorno local; en AWS los define la tarea de ECS.
+# ─────────────────────────────────────────────
+DB_CONFIG = {
+    "host":     os.getenv("DB_HOST", "localhost"),
+    "port":     int(os.getenv("DB_PORT", "5432")),
+    "database": os.getenv("DB_NAME", "news_dw"),
+    "user":     os.getenv("DB_USER", "myuser"),
+    "password": os.getenv("DB_PASSWORD", "admin"),
+    "sslmode":  os.getenv("DB_SSLMODE", "prefer"),   # RDS PostgreSQL 18 exige SSL: "require"
+}
+
+# Prefijo de las rutas: "" en local, "/api" detrás de CloudFront (web y API en el mismo dominio)
+API_PREFIX = os.getenv("API_PREFIX", "").rstrip("/")
+
+# Orígenes permitidos por CORS, separados por comas
+CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()]
+
+APP_MODE = os.getenv("APP_MODE", "local")
+
+# Variables que la tarea de ECS debe definir: fuera de local no se usan los valores por defecto
+REQUIRED_DB_ENV = ["DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD", "DB_SSLMODE"]
+
+
+def check_db_env():
+    """
+    En AWS falla al arrancar si falta alguna variable de la BD, en vez de intentar conectar a localhost.
+    """
+    if APP_MODE == "local":
+        return
+    missing = [name for name in REQUIRED_DB_ENV if not os.getenv(name, "").strip()]
+    if missing:
+        raise RuntimeError(f"Faltan variables de entorno de la base de datos: {', '.join(missing)}")
+
+# ─────────────────────────────────────────────
 # Estado global (modelo + datos)
 # ─────────────────────────────────────────────
 model: NLPRecomender = None
@@ -37,15 +72,16 @@ teaser_model: TeaserModel = None
 async def lifespan(app: FastAPI):
     global model, df, repo, teaser_model
 
-    # ── Conectar a PostgreSQL local ────────────
-    db = PostgreSQLConnection(
-        host="localhost",
-        port=5432,
-        database="news_dw",
-        user="myuser",
-        password="admin"
+    # ── Conectar a PostgreSQL (local o RDS) ────
+    check_db_env()
+    # Se registra la configuración sin la contraseña
+    logger.info(
+        f"Conectando a PostgreSQL {DB_CONFIG['user']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/"
+        f"{DB_CONFIG['database']} (sslmode={DB_CONFIG['sslmode']}, modo {APP_MODE})"
     )
+    db = PostgreSQLConnection(**DB_CONFIG)
     db.connect()
+    logger.info("Conectado a PostgreSQL")
 
     # ── Cargar datos y entrenar modelo ─────────
     repo = ArticleRepository(db)
@@ -74,18 +110,23 @@ async def lifespan(app: FastAPI):
 # App
 # ─────────────────────────────────────────────
 app = FastAPI(
-    title="Medium NLP Recommender API — LOCAL",
-    description="API local basada en PostgreSQL + NLPRecomender",
-    version="1.0.0-local",
-    lifespan=lifespan
+    title="SmartSearch API",
+    description="API basada en PostgreSQL + NLPRecomender (BM25 + embeddings) + teaser en SageMaker",
+    version="1.1.0",
+    lifespan=lifespan,
+    docs_url=f"{API_PREFIX}/docs",
+    openapi_url=f"{API_PREFIX}/openapi.json",
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+
+# Todas las rutas cuelgan de este router; se monta con API_PREFIX al final del archivo
+router = APIRouter()
 
 # ─────────────────────────────────────────────
 # Schemas
@@ -98,18 +139,18 @@ class SearchRequest(BaseModel):
 # Endpoints
 # ─────────────────────────────────────────────
 
-@app.get("/health")
+@router.get("/health")
 def health():
     """Verifica que la API esté activa."""
     return {
         "status": "ok",
         "model_loaded": model is not None,
         "articles_loaded": len(df) if df is not None else 0,
-        "mode": "local-postgresql"
+        "mode": APP_MODE
     }
 
 
-@app.post("/search")
+@router.post("/search")
 def search(req: SearchRequest):
     """
     Busca artículos similares al texto ingresado.
@@ -128,7 +169,7 @@ def search(req: SearchRequest):
         raise HTTPException(status_code=500, detail="Error procesando la búsqueda")
 
 
-@app.get("/recommend/{url:path}")
+@router.get("/recommend/{url:path}")
 def recommend(url: str, top_n: int = 5):
     """
     Retorna artículos similares dado el ID de un artículo base.
@@ -148,7 +189,7 @@ def recommend(url: str, top_n: int = 5):
         raise HTTPException(status_code=500, detail="Error generando recomendaciones")
 
 
-@app.get("/articles")
+@router.get("/articles")
 def get_articles(limit: int = 50, offset: int = 0):
     """Retorna artículos paginados."""
     if df is None or df.empty:
@@ -163,7 +204,7 @@ def get_articles(limit: int = 50, offset: int = 0):
     }
 
 
-@app.get("/categories")
+@router.get("/categories")
 def get_categories(limit: int = 12):
     """
     Retorna las categorías de la BD ordenadas por número de artículos (temas más populares primero).
@@ -178,7 +219,7 @@ def get_categories(limit: int = 12):
     ]
 
 
-@app.get("/articles/{url:path}/teaser")
+@router.get("/articles/{url:path}/teaser")
 def get_article_teaser(url: str):
     """
     Genera el resumen (teaser) del artículo con el modelo Qwen3 desplegado en SageMaker.
@@ -205,7 +246,7 @@ def get_article_teaser(url: str):
         raise HTTPException(status_code=502, detail="El modelo no pudo generar el resumen")
 
 
-@app.get("/articles/{url:path}/related")
+@router.get("/articles/{url:path}/related")
 def get_related_articles(url: str, top_n: int = 5):
     """
     Dada la url de un artículo seleccionado por el usuario,
@@ -236,7 +277,7 @@ def get_related_articles(url: str, top_n: int = 5):
         raise HTTPException(status_code=500, detail="Error generando artículos relacionados")
 
 
-@app.get("/articles/{url:path}")
+@router.get("/articles/{url:path}")
 def get_article(url: str):
     """
     Retorna un artículo específico por su url de la BD.
@@ -250,3 +291,6 @@ def get_article(url: str):
         raise HTTPException(status_code=404, detail=f"Artículo '{url}' no encontrado")
 
     return result.iloc[0][DISPLAY_COLUMNS].to_dict()
+
+
+app.include_router(router, prefix=API_PREFIX)
