@@ -1,0 +1,40 @@
+# Verificación en producción tras reactivar AWS — 2026-11-04 (19:35–19:50 UTC)
+# Servicio mi-servicio con la revisión mi-app:7 (imagen a4160df). Dominio y DNS del ALB omitidos.
+# Pruebas no destructivas: no se crearon cuentas ni se bloqueó ninguna cuenta real.
+
+## Arranque (deploy/reactivate.sh)
+RDS: disponible · SageMaker summarizer-lora: InService · ECS: 1 tarea, estado estable
+La tarea leyó los 3 secretos (DB_PASSWORD, AUTH_SECRET_KEY, ORIGIN_VERIFY_SECRET) y pasó el health check del ALB.
+
+## Funcionalidad a través de CloudFront
+health        {"status":"ok","model_loaded":true,"articles_loaded":1870}
+search        3 resultados -> Machine learning for rubber development
+articles      1870 total, 5 devueltos
+categories    Artificial Intelligence (616), Cybersecurity (196), ...
+related       3 relacionados
+teaser        200 en 6,2 s (resumen generado por Qwen3 + LoRA en SageMaker)
+
+## Navegador (Chromium headless, sitio real)
+inicio: 3 destacados, 7 chips de temas · búsqueda "cybersecurity": 10 tarjetas · ver similares: 5 · explorar: 10
+botón "Generar resumen": resumen real en 6 s
+Violaciones de CSP: 0. La CSP bloqueó además la evaluación de código (eval) que intentó la herramienta de pruebas,
+lo que confirma que script-src 'self' está activo.
+
+## Controles de seguridad
+/api/docs, /api/openapi.json                    404
+POST /api/search top_n=999                      422
+ALB directo /api/articles (sin pasar por CF)    403 {"detail":"Acceso no permitido"}
+ALB directo con X-Origin-Verify inventado       403
+ALB directo /api/health                         200 (exento para el health check)
+CORS origen ajeno                               sin Access-Control-Allow-Origin
+CORS origen propio                              Access-Control-Allow-Origin: <dominio de CloudFront>
+Cabeceras API                                   X-Frame-Options DENY, CSP default-src 'none', HSTS
+Login con correo inexistente                    401 {"detail":"Correo o contraseña incorrectos."}
+Rate limit login, X-Forwarded-For falsificado distinto en cada intento:
+  401 401 401 401 401 401 401 401 401 429 429   (la 11.ª petición de la IP real, contando una anterior)
+  -> el límite usa la IP real; la falsificación no lo evita.
+Frontend con la IP limitada                     muestra "Demasiadas solicitudes. Espera un momento..."
+
+## Hallazgo nuevo (H9)
+El log de accesos de uvicorn registró las IPs falsificadas (198.51.100.x) en lugar de la real, porque el
+contenedor arranca con --forwarded-allow-ips "*". Ver H9 en INFORME_SEGURIDAD.md.

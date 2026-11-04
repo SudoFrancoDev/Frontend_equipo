@@ -5,7 +5,7 @@
 | **Fecha** | 4 de noviembre de 2026 |
 | **Versión analizada** | commit `b22a184` (rama `main`) y correcciones de este informe |
 | **Guía de referencia** | OWASP Top 10:2025 · OWASP ASVS 4.0 (nivel 1) como lista de control |
-| **Resultado** | 8 hallazgos: 7 corregidos, 1 (H2) mitigado parcialmente con acciones pendientes en AWS |
+| **Resultado** | 9 hallazgos: 7 corregidos, 1 (H2) mitigado parcialmente, 1 (H9) abierto de severidad baja · correcciones desplegadas y verificadas en producción ([evidencia](evidencias/verificacion_produccion.txt)) |
 
 ---
 
@@ -54,6 +54,7 @@ condiciones adicionales o tiene un impacto limitado. **Baja**: refuerzo o exposi
 | H6 | CORS abierto a cualquier origen (`*`) en producción | A02 Configuración incorrecta | Baja | ✅ Corregido |
 | H7 | Swagger, OpenAPI y modo de ejecución expuestos en producción | A02 Configuración incorrecta | Baja | ✅ Corregido |
 | H8 | Parámetros sin tope de tamaño (`top_n`, `limit`, cuerpos de login) | A06 Diseño inseguro / A10 | Baja | ✅ Corregido |
+| H9 | El log de accesos registra la IP de `X-Forwarded-For`, que el cliente puede falsificar | A09 Fallos de registro y alertas | Baja | ☐ Abierto |
 
 Falsos positivos descartados: los 3 avisos de Bandit (sección 5).
 
@@ -233,6 +234,19 @@ Argon2 tendría que procesar.
 | Campos de las cuentas | Topes de tamaño; contraseñas ≤ 1024 caracteres |
 
 Cualquier valor fuera de rango devuelve **422**. Verificado en `pruebas_api_local.py`.
+
+### H9 — IP falsificable en el log de accesos · Baja · ☐ Abierto
+
+**Descripción.** Encontrado al verificar en producción. El contenedor arranca uvicorn con
+`--proxy-headers --forwarded-allow-ips "*"`, así que el log de accesos registra como IP del cliente el
+**primer** valor de `X-Forwarded-For`, que el cliente controla. En la prueba, los intentos de login quedaron
+registrados con las IPs inventadas `198.51.100.x`. Esto no afecta al límite de peticiones (H4), que calcula
+la IP correctamente, pero los logs no sirven para identificar a un atacante.
+
+**Recomendación.** Desactivar el reescrito de IP de uvicorn y registrar la IP calculada por
+`middleware/rate_limit.client_ip()`. Para eso hay que quitar `--proxy-headers` y `--forwarded-allow-ips` del
+`CMD` del Dockerfile y añadir un middleware de log de accesos propio. Mientras tanto, los logs de acceso de
+CloudFront (si se activan) registran la IP real.
 
 ---
 
