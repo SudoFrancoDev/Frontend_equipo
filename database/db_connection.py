@@ -1,6 +1,7 @@
 import logging
 
 import psycopg2
+import psycopg2.extras
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -41,7 +42,8 @@ class PostgreSQLConnection:
                 sslmode=self.sslmode,
                 connect_timeout=self.connect_timeout
             )
-            # Solo se hacen lecturas: sin autocommit cada SELECT dejaría una transacción abierta en el servidor
+            # Sin autocommit cada SELECT dejaría una transacción abierta en el servidor;
+            # las escrituras del módulo de cuentas son sentencias sueltas y atómicas
             self.connection.autocommit = True
             print("Conexión exitosa a la base de datos.")
         except Exception as e:
@@ -81,3 +83,35 @@ class PostgreSQLConnection:
             self.close()
             self.connect()
             return pd.read_sql(query, self.connection, params=params)
+
+    def execute(self, query: str, params=None, fetch: str = None):
+        """
+        Ejecuta una sentencia (INSERT/UPDATE/DDL) con autocommit: cada sentencia es atómica.
+        fetch: None (nada), "one" (una fila como dict o None) o "all" (lista de dicts).
+        Se reconecta y reintenta una vez solo si la conexión se perdió antes de ejecutar.
+        """
+        if not self.connection:
+            raise Exception("No hay conexión a la base de datos.")
+
+        if self.connection.closed:
+            self.connect()
+
+        try:
+            return self._run(query, params, fetch)
+        except (psycopg2.OperationalError, psycopg2.InterfaceError) as e:
+            if not self.connection.closed:
+                raise
+            logger.warning(f"Conexión a PostgreSQL perdida ({e}); reconectando")
+            self.close()
+            self.connect()
+            return self._run(query, params, fetch)
+
+    def _run(self, query, params, fetch):
+        with self.connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(query, params)
+            if fetch == "one":
+                row = cur.fetchone()
+                return dict(row) if row else None
+            if fetch == "all":
+                return [dict(r) for r in cur.fetchall()]
+            return cur.rowcount

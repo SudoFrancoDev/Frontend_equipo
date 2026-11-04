@@ -73,6 +73,9 @@ psql -h localhost -U myuser -d news_dw -f ..\create_tables.sql
 psql -h localhost -U myuser -d news_dw -f ..\load_data.sql
 ```
 
+> **Cuentas de usuario:** la tabla `app.app_user` (`POSTGRES_BD/create_auth_tables.sql`) la crea la API al
+> arrancar si no existe. Está en el esquema `app`, así que `create_tables.sql` no la borra.
+
 Al terminar, `load_data.sql` muestra el número de filas por tabla. Debe aparecer `fact_article` con **1870** filas.
 
 Para comprobarlo manualmente:
@@ -173,6 +176,24 @@ Y abre **http://localhost:5500/index.html**.
 - `index.html` → buscador, temas populares (categorías de la BD) y 3 artículos destacados
 - `resultados.html` → búsqueda (`?q=`), artículos similares (`?similar=`) o exploración de todos los artículos con "Cargar más"; filtro por categoría
 - `informacion.html` → presentación del proyecto, tecnologías y equipo
+- `login.html` → iniciar sesión, crear cuenta y "Olvidé mi contraseña" (la cuenta es **opcional**: buscar y navegar no la requiere)
+
+### Cuentas de usuario
+
+| Regla | Valor por defecto (variable de entorno) |
+|---|---|
+| Contraseña | mínimo 8 caracteres con número, mayúscula y carácter especial |
+| Correo | único: no se puede registrar dos veces |
+| Bloqueo temporal | 5 contraseñas incorrectas → 15 min (`AUTH_MAX_FAILED_ATTEMPTS`, `AUTH_LOCKOUT_MINUTES`) |
+| Inactividad del token (API) | 30 min sin peticiones (`AUTH_TOKEN_IDLE_MINUTES`) |
+| Inactividad en la aplicación | 15 min sin usar la página; aviso 1 min antes (`AUTH_SESSION_IDLE_MINUTES`) |
+| Duración máxima de una sesión | 12 h (`AUTH_SESSION_MAX_HOURS`) |
+| Sesión única | si la cuenta ya está abierta en otro navegador se rechaza el ingreso; el usuario puede confirmar cerrar la otra sesión |
+| Enlace de recuperación | vence en 30 min y es de un solo uso (`AUTH_RESET_TOKEN_MINUTES`) |
+
+La contraseña se guarda con Argon2id; el correo y el nombre, cifrados con `AUTH_SECRET_KEY` (en local se usa una
+clave de desarrollo fija). En local no se envían correos: el enlace de "Olvidé mi contraseña" aparece en la
+terminal de la API (`enlace de recuperación para ...`).
 
 Cada tarjeta tiene "Generar resumen" (modelo Qwen3 + LoRA), "Ver similares" e "Ir al artículo".
 
@@ -236,7 +257,9 @@ Frontend_equipo/
 ├── database/
 │   └── db_connection.py             ← conexión a PostgreSQL
 ├── repository/
-│   └── article_repository.py        ← consulta de artículos
+│   ├── article_repository.py        ← consulta de artículos
+│   └── user_repository.py           ← cuentas de usuario (app.app_user)
+├── auth/                            ← módulo de inicio de sesión (endpoints /auth/*)
 ├── pipeline/
 │   └── train.py                     ← entrenamiento del modelo
 ├── vectorizer/
@@ -245,11 +268,12 @@ Frontend_equipo/
 │   └── test_nlp_recomender.py       ← pruebas unitarias
 ├── POSTGRES_BD/
 │   ├── create_tables.sql            ← esquema news_dw (Paso 3)
+│   ├── create_auth_tables.sql       ← tabla de cuentas (la crea la API)
 │   ├── load_data.sql                ← carga de los CSV (Paso 3)
 │   └── CSV/                         ← datos
 ├── frontend/
-│   ├── index.html · resultados.html · informacion.html
-│   ├── script.js · config.js · styles.css
+│   ├── index.html · resultados.html · informacion.html · login.html
+│   ├── script.js · auth.js · config.js · styles.css
 │   ├── assets/                      ← logo, iconos de tecnologías y fotos del equipo
 │   └── SETUP.md                     ← esta guía
 ├── mockup/                          ← diseños de la interfaz

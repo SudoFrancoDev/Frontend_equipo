@@ -13,6 +13,7 @@ from repository.article_repository import ArticleRepository
 from pipeline.train import train_model, show_recommendations
 from vectorizer.NLPRecomender import NLPRecomender
 from teaser.teaser_model import TeaserModel, InvalidInputError, TeaserGenerationError
+from auth import router as auth
 
 # ─────────────────────────────────────────────
 # Logging
@@ -91,6 +92,9 @@ async def lifespan(app: FastAPI):
     model = train_model(df)
     logger.info("Modelo NLP entrenado y listo")
 
+    # ── Cuentas de usuario (opcional para buscar) ──
+    auth.setup(db)
+
     # ── Modelo de teaser (SageMaker) ───────────
     endpoint_name = os.getenv("TEASER_ENDPOINT_NAME")
     if endpoint_name:
@@ -111,8 +115,8 @@ async def lifespan(app: FastAPI):
 # ─────────────────────────────────────────────
 app = FastAPI(
     title="SmartSearch API",
-    description="API basada en PostgreSQL + NLPRecomender (BM25 + embeddings) + teaser en SageMaker",
-    version="1.1.0",
+    description="API basada en PostgreSQL + NLPRecomender (BM25 + embeddings) + teaser en SageMaker + cuentas de usuario",
+    version="1.2.0",
     lifespan=lifespan,
     docs_url=f"{API_PREFIX}/docs",
     openapi_url=f"{API_PREFIX}/openapi.json",
@@ -294,3 +298,4 @@ def get_article(url: str):
 
 
 app.include_router(router, prefix=API_PREFIX)
+app.include_router(auth.router, prefix=API_PREFIX)

@@ -14,6 +14,10 @@ scipy==1.17.1
 
 psycopg2-binary==2.9.11
 
+# Cuentas de usuario: hash de contraseñas (Argon2id) y cifrado de datos sensibles
+argon2-cffi==25.1.0
+cryptography==50.0.2
+
 rank-bm25==0.2.2
 sentence-transformers==2.7.0
 transformers==4.57.6
