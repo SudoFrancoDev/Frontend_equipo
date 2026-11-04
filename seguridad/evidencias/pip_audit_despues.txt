@@ -1,0 +1,14 @@
+# pip-audit 2026-11-04 sobre requirements-api.txt (versiones fijadas)
+No known vulnerabilities found
+
+# Árbol completo de dependencias resuelto (incluye transitivas, sin torch)
+No known vulnerabilities found
+
+# torch==2.14.1 (se instala aparte en el Dockerfile)
+No known vulnerabilities found
+
+# requeriments.txt (entorno completo de desarrollo)
+Found 1 known vulnerability in 1 package
+Name            Version ID             Fix Versions
+--------------- ------- -------------- ------------
+deep-translator 1.11.4  PYSEC-2022-252

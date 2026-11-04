@@ -192,6 +192,14 @@ Las pruebas usan un modelo de embeddings simulado, así que no necesitan Postgre
 
 ---
 
+## 🔒 Seguridad
+
+El análisis de seguridad (SAST, dependencias, pruebas dinámicas en local y referencia a OWASP Top 10), con
+hallazgos, evidencias, correcciones y acciones pendientes, está en
+[`seguridad/INFORME_SEGURIDAD.md`](seguridad/INFORME_SEGURIDAD.md).
+
+---
+
 ## 🗂️ Estructura
 
 ```

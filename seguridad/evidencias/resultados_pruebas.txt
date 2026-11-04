@@ -1,0 +1,73 @@
+# Resultados de las pruebas dinámicas — 2026-11-04
+# Entorno: equipo local del desarrollador. API (uvicorn) en 127.0.0.1:58000 con las dependencias
+# actualizadas; PostgreSQL 18 en Docker (127.0.0.1:55432) con los CSV de POSTGRES_BD/ (1870 artículos).
+# No se usó ningún sistema de AWS.
+
+## seguridad/pruebas/pruebas_api_local.py
+PASS search devuelve 10 resultados  [200]
+PASS articles paginado
+PASS categories
+PASS related devuelve 5  [200]
+PASS recommend
+PASS top_n=1000 rechazado
+PASS query de 600 caracteres rechazada
+PASS limit=100000 rechazado
+PASS offset negativo rechazado
+PASS related top_n=500 rechazado
+PASS login con password de 5000 chars rechazado
+PASS SQLi en /articles/<url> -> 404 (' OR '1'='1...)
+PASS SQLi en login -> 401 genérico
+PASS SQLi en /articles/<url> -> 404 ('; DROP TABLE ...)
+PASS SQLi en login -> 401 genérico
+PASS SQLi en /articles/<url> -> 404 (" UNION SELECT...)
+PASS SQLi en login -> 401 genérico
+PASS tabla de usuarios intacta tras SQLi
+PASS X-Content-Type-Options
+PASS X-Frame-Options
+PASS CSP en API
+PASS registro
+PASS contraseña débil rechazada
+PASS login OK
+PASS Cache-Control no-store en /auth
+PASS /me con token
+PASS /me sin token -> 401
+PASS /me con token inventado -> 401
+PASS segunda sesión sin force -> 409
+PASS token anterior invalidado tras force
+PASS token reutilizado tras logout -> 401
+PASS reset con token falso -> 400
+PASS mismo código correo existente vs inexistente
+PASS mismo mensaje correo existente vs inexistente  [{'detail': 'Correo o contraseña incorrectos.'}]
+PASS 5º intento fallido bloquea (423)
+PASS contraseña correcta rechazada mientras está bloqueada
+PASS login: 11ª petición/min -> 429  [[401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 429]]
+PASS 429 trae Retry-After
+PASS otra IP no se ve afectada
+PASS registro: 6º en 15 min -> 429  [[201, 201, 201, 201, 201, 429]]
+PASS forgot-password: 6º en 15 min -> 429  [[200, 200, 200, 200, 200, 429]]
+PASS search: 61ª/min -> 429
+
+42/42 pruebas superadas
+
+## seguridad/pruebas/pruebas_modo_aws.py  (APP_MODE=aws, sin base de datos)
+PASS /api/docs deshabilitado
+PASS /api/openapi.json deshabilitado
+PASS health sin cabecera (health check del ALB)
+PASS health no expone el modo
+PASS petición directa al ALB sin cabecera -> 403
+PASS cabecera incorrecta -> 403
+PASS con cabecera de CloudFront pasa (503 sin datos)
+PASS CORS: origen ajeno no autorizado
+PASS CORS: CloudFront autorizado
+PASS IP real con CloudFront+ALB
+PASS XFF falsificado por el cliente se ignora
+
+11/11 pruebas superadas
+
+## seguridad/pruebas/pruebas_csp_navegador.py  (Chromium headless, CSP de CloudFront aplicada)
+index: tarjetas destacadas = 3
+index: fuente de Google cargada = True
+resultados: tarjetas renderizadas = 10
+registro + login desde el navegador: OK -> http://datara.test:58080/index.html
+
+Violaciones de CSP / errores: 0

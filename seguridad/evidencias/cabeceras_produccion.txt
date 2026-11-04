@@ -1,0 +1,19 @@
+# Cabeceras en producción tras aplicar la Response Headers Policy de CloudFront — 2026-11-04T19:28Z
+# (dominio de CloudFront omitido)
+
+$ curl -sI https://<dominio>/index.html
+HTTP/2 200 
+x-frame-options: DENY
+referrer-policy: strict-origin-when-cross-origin
+content-security-policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+x-content-type-options: nosniff
+strict-transport-security: max-age=31536000
+permissions-policy: camera=(), microphone=(), geolocation=(), payment=()
+
+$ curl -sI http://<dominio>/
+HTTP/1.1 301 Moved Permanently
+Location: https://<dominio>/
+
+# Chromium headless sobre las 4 páginas en producción
+index.html, resultados.html, informacion.html, login.html: 200, fuente cargada
+Violaciones de CSP: 0

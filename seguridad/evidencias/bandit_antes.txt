@@ -1,0 +1,73 @@
+Run started:2026-11-04 18:54:11.361087+00:00
+
+Test results:
+>> Issue: [B105:hardcoded_password_string] Possible hardcoded password: 'datara-local-dev-key-no-usar-en-produccion-0000'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b105_hardcoded_password_string.html
+   Location: auth/router.py:31:17
+30	# Clave de desarrollo: solo se acepta en local. En AWS se define AUTH_SECRET_KEY (Secrets Manager)
+31	DEV_SECRET_KEY = "datara-local-dev-key-no-usar-en-produccion-0000"
+32	
+
+--------------------------------------------------
+>> Issue: [B107:hardcoded_password_default] Possible hardcoded password: 'admin'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b107_hardcoded_password_default.html
+   Location: database/db_connection.py:11:4
+10	class PostgreSQLConnection:
+11	    def __init__(
+12	            self,
+13	            host: str = "localhost",
+14	            database: str = "news_dw",
+15	            user: str = "myuser",
+16	            password: str = "admin",
+17	            port: int = 5432,
+18	            sslmode: str = "prefer",
+19	            connect_timeout: int = 10
+20	    ):
+21	        self.host = host
+22	        self.database = database
+23	        self.user = user
+24	        self.password = password
+25	        self.port = port
+26	        # "prefer" usa SSL si el servidor lo ofrece; en RDS se usa "require"
+27	        self.sslmode = sslmode
+28	        self.connect_timeout = connect_timeout
+29	        self.connection = None
+30	
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: repository/user_repository.py:37:16
+36	        return self.db.execute(
+37	            f"""
+38	            SELECT {USER_COLUMNS},
+39	                   locked_until IS NOT NULL AND locked_until > now() AS is_locked,
+40	                   GREATEST(0, CEIL(EXTRACT(EPOCH FROM locked_until - now()) / 60))::int AS locked_minutes
+41	            FROM app.app_user WHERE email_hash = %s;""",
+42	            (email_hash,), fetch="one")
+
+--------------------------------------------------
+
+Code scanned:
+	Total lines of code: 1056
+	Total lines skipped (#nosec): 0
+	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
+
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 2
+		Medium: 1
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+		Medium: 3
+		High: 0
+Files skipped (0):
