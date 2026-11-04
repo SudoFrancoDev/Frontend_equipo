@@ -106,9 +106,11 @@ cualquiera puede llamar a la API directamente por HTTP, saltándose CloudFront y
 **Verificación.** `pruebas_modo_aws.py`: una petición sin el encabezado o con un valor incorrecto recibe 403;
 con el encabezado correcto pasa.
 
+**Aplicado en AWS (4/11/2026).** CloudFront envía `X-Origin-Verify` y la tarea de ECS (`mi-app:7`) exige
+`ORIGIN_VERIFY_SECRET`. Una petición directa al ALB que no pase por CloudFront recibe 403.
+
 **Pendiente (infraestructura).**
-1. Ejecutar `deploy/harden_cloudfront.sh` y añadir `ORIGIN_VERIFY_SECRET` a la tarea de ECS
-   (ver [§6](#6-acciones-pendientes-del-equipo)).
+1. ~~Ejecutar `deploy/harden_cloudfront.sh` y añadir `ORIGIN_VERIFY_SECRET` a la tarea de ECS.~~ Hecho.
 2. Restringir el grupo de seguridad del ALB a la *managed prefix list*
    `com.amazonaws.global.cloudfront.origin-facing`. **Comprobado el 4/11/2026: hoy admite el puerto 80 desde
    `0.0.0.0/0`**, es decir, desde cualquier IP. El grupo de las tareas sí está bien: el puerto 8000 solo admite
@@ -119,7 +121,7 @@ con el encabezado correcto pasa.
    certificado para `api.<dominio>`, añadir al ALB un listener HTTPS:443 y poner en CloudFront el origen
    `api.<dominio>` con `OriginProtocolPolicy: https-only`.
 
-**Riesgo residual mientras no se haga el paso 3.** El tráfico entre CloudFront y el ALB, en la misma
+**Riesgo residual aceptado** (el equipo pospone el paso 3 por no tener dominio propio). El tráfico entre CloudFront y el ALB, en la misma
 región, va por la red de AWS, pero sin cifrar.
 
 ### H3 — Se podía saber qué correos tienen cuenta · Media · ✅ Corregido
@@ -266,10 +268,10 @@ Cualquier valor fuera de rango devuelve **422**. Verificado en `pruebas_api_loca
 | 1 | Construir y subir la nueva imagen. Antes de subirla se probó en local con `APP_MODE=aws`: health, búsqueda, `/docs`→404, topes y cabeceras correctos. | H1, H3, H4, H6–H8 | | ☑ 4/11/2026 · imagen `mi-app:a4160df` (también `:latest`), commit `a4160df` |
 | 2 | Registrar la nueva definición de tarea (`CORS_ORIGINS`, `TRUSTED_PROXY_HOPS=2`) y asignarla a `mi-servicio` | H4, H6 | | ☑ 4/11/2026 · revisión `mi-app:6`; el servicio sigue pausado (0 tareas) y la usará al reactivarse |
 | 3 | `CLOUDFRONT_DISTRIBUTION_ID=<id> bash deploy/harden_cloudfront.sh` | H2, H5 | | ☑ 4/11/2026 · política de cabeceras en ambos comportamientos; CloudFront envía `X-Origin-Verify` al ALB; secreto `smartsearch/origin-verify` creado |
-| 4 | Cuando CloudFront esté *Deployed*: añadir `ORIGIN_VERIFY_SECRET` a la tarea, dar `GetSecretValue` al rol de ejecución y redesplegar. **No hacerlo antes del paso 3**: la API rechazaría con 403 todas las peticiones. Falta el permiso de IAM: sin él la tarea no arranca | H2 | | ☐ CloudFront ya envía el encabezado |
-| 5 | Restringir el grupo de seguridad del ALB (hoy `0.0.0.0/0:80`) a la prefix list de CloudFront: primero añadir la regla nueva y luego quitar la abierta | H2 | | ☐ |
-| 5b | Activar `scanOnPush` en el repositorio de ECR (hoy la imagen no tiene escaneo) | H1 | | ☐ |
-| 6 | Dominio propio + certificado ACM + HTTPS de CloudFront al ALB | H2 | | ☐ |
+| 4 | Cuando CloudFront esté *Deployed*: añadir `ORIGIN_VERIFY_SECRET` a la tarea, dar `GetSecretValue` al rol de ejecución y redesplegar. **No hacerlo antes del paso 3**: la API rechazaría con 403 todas las peticiones | H2 | | ☑ 4/11/2026 · revisión `mi-app:7` con el secreto; permiso `ReadOriginVerifySecret` en el rol de ejecución; se comprobó que el valor coincide con el que envía CloudFront |
+| 5 | Restringir el grupo de seguridad del ALB (hoy `0.0.0.0/0:80`) a la prefix list de CloudFront: primero añadir la regla nueva y luego quitar la abierta | H2 | | 🟡 4/11/2026 · regla de la prefix list añadida; **la regla `0.0.0.0/0:80` sigue activa** hasta que el equipo decida quitarla |
+| 5b | Activar `scanOnPush` en el repositorio de ECR (hoy la imagen no tiene escaneo) | H1 | | ⏸ Descartado por el equipo; las dependencias se auditan con pip-audit |
+| 6 | Dominio propio + certificado ACM + HTTPS de CloudFront al ALB | H2 | | ⏸ Pospuesto: el proyecto no tiene dominio propio (riesgo residual aceptado, ver H2) |
 | 7 | Firmar el Anexo A y repetir las pruebas contra AWS (incluido un escaneo OWASP ZAP *baseline*) | — | | ☐ |
 | 8 | Opcional: AWS WAF con regla *rate-based*; quitar `deep-translator` si no se usa | H1, H4 | | ☐ |
 
