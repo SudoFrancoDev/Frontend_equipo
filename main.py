@@ -4,9 +4,9 @@ from contextlib import asynccontextmanager
 
 
 import pandas as pd
-from fastapi import APIRouter, FastAPI, HTTPException
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from database.db_connection import PostgreSQLConnection
 from repository.article_repository import ArticleRepository
@@ -14,6 +14,8 @@ from pipeline.train import train_model, show_recommendations
 from vectorizer.NLPRecomender import NLPRecomender
 from teaser.teaser_model import TeaserModel, InvalidInputError, TeaserGenerationError
 from auth import router as auth
+from middleware.http_security import OriginVerifyMiddleware, SecurityHeadersMiddleware, origin_verify_secret
+from middleware.rate_limit import rate_limit
 
 # ─────────────────────────────────────────────
 # Logging
@@ -43,6 +45,9 @@ API_PREFIX = os.getenv("API_PREFIX", "").rstrip("/")
 CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()]
 
 APP_MODE = os.getenv("APP_MODE", "local")
+
+# Swagger (/docs) y el esquema OpenAPI solo se publican en local, salvo ENABLE_DOCS=true
+ENABLE_DOCS = APP_MODE == "local" or os.getenv("ENABLE_DOCS", "").lower() == "true"
 
 # Variables que la tarea de ECS debe definir: fuera de local no se usan los valores por defecto
 REQUIRED_DB_ENV = ["DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD", "DB_SSLMODE"]
@@ -118,15 +123,30 @@ app = FastAPI(
     description="API basada en PostgreSQL + NLPRecomender (BM25 + embeddings) + teaser en SageMaker + cuentas de usuario",
     version="1.2.0",
     lifespan=lifespan,
-    docs_url=f"{API_PREFIX}/docs",
-    openapi_url=f"{API_PREFIX}/openapi.json",
+    docs_url=f"{API_PREFIX}/docs" if ENABLE_DOCS else None,
+    redoc_url=f"{API_PREFIX}/redoc" if ENABLE_DOCS else None,
+    openapi_url=f"{API_PREFIX}/openapi.json" if ENABLE_DOCS else None,
 )
 
+if "*" in CORS_ORIGINS and APP_MODE != "local":
+    logger.warning("CORS_ORIGINS='*' fuera de local: define el dominio de CloudFront")
+
+# El último middleware añadido es el más externo: CORS → verificación de origen → cabeceras
+app.add_middleware(
+    SecurityHeadersMiddleware,
+    api_prefix=API_PREFIX,
+    docs_paths=(f"{API_PREFIX}/docs", f"{API_PREFIX}/redoc") if ENABLE_DOCS else (),
+)
+if origin_verify_secret():
+    app.add_middleware(OriginVerifyMiddleware, secret=origin_verify_secret(),
+                       exempt_paths=(f"{API_PREFIX}/health",))
+elif APP_MODE != "local":
+    logger.warning("ORIGIN_VERIFY_SECRET no definido: la API acepta peticiones que no pasan por CloudFront")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
     allow_methods=["GET", "POST"],
-    allow_headers=["*"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 # Todas las rutas cuelgan de este router; se monta con API_PREFIX al final del archivo
@@ -136,8 +156,8 @@ router = APIRouter()
 # Schemas
 # ─────────────────────────────────────────────
 class SearchRequest(BaseModel):
-    query: str
-    top_n: int = 10
+    query: str = Field(max_length=500)
+    top_n: int = Field(10, ge=1, le=50)
 
 # ─────────────────────────────────────────────
 # Endpoints
@@ -150,11 +170,10 @@ def health():
         "status": "ok",
         "model_loaded": model is not None,
         "articles_loaded": len(df) if df is not None else 0,
-        "mode": APP_MODE
     }
 
 
-@router.post("/search")
+@router.post("/search", dependencies=[Depends(rate_limit("search", 60, 60))])
 def search(req: SearchRequest):
     """
     Busca artículos similares al texto ingresado.
@@ -173,8 +192,8 @@ def search(req: SearchRequest):
         raise HTTPException(status_code=500, detail="Error procesando la búsqueda")
 
 
-@router.get("/recommend/{url:path}")
-def recommend(url: str, top_n: int = 5):
+@router.get("/recommend/{url:path}", dependencies=[Depends(rate_limit("recommend", 60, 60))])
+def recommend(url: str, top_n: int = Query(5, ge=1, le=20)):
     """
     Retorna artículos similares dado el ID de un artículo base.
     """
@@ -193,8 +212,8 @@ def recommend(url: str, top_n: int = 5):
         raise HTTPException(status_code=500, detail="Error generando recomendaciones")
 
 
-@router.get("/articles")
-def get_articles(limit: int = 50, offset: int = 0):
+@router.get("/articles", dependencies=[Depends(rate_limit("read", 120, 60))])
+def get_articles(limit: int = Query(50, ge=1, le=100), offset: int = Query(0, ge=0)):
     """Retorna artículos paginados."""
     if df is None or df.empty:
         raise HTTPException(status_code=503, detail="Datos no disponibles")
@@ -208,8 +227,8 @@ def get_articles(limit: int = 50, offset: int = 0):
     }
 
 
-@router.get("/categories")
-def get_categories(limit: int = 12):
+@router.get("/categories", dependencies=[Depends(rate_limit("read", 120, 60))])
+def get_categories(limit: int = Query(12, ge=1, le=50)):
     """
     Retorna las categorías de la BD ordenadas por número de artículos (temas más populares primero).
     """
@@ -223,7 +242,8 @@ def get_categories(limit: int = 12):
     ]
 
 
-@router.get("/articles/{url:path}/teaser")
+# Cada resumen es una invocación de SageMaker: límite más estricto
+@router.get("/articles/{url:path}/teaser", dependencies=[Depends(rate_limit("teaser", 10, 60))])
 def get_article_teaser(url: str):
     """
     Genera el resumen (teaser) del artículo con el modelo Qwen3 desplegado en SageMaker.
@@ -250,8 +270,8 @@ def get_article_teaser(url: str):
         raise HTTPException(status_code=502, detail="El modelo no pudo generar el resumen")
 
 
-@router.get("/articles/{url:path}/related")
-def get_related_articles(url: str, top_n: int = 5):
+@router.get("/articles/{url:path}/related", dependencies=[Depends(rate_limit("recommend", 60, 60))])
+def get_related_articles(url: str, top_n: int = Query(5, ge=1, le=20)):
     """
     Dada la url de un artículo seleccionado por el usuario,
     retorna los artículos más similares usando show_recommendations().
@@ -281,7 +301,7 @@ def get_related_articles(url: str, top_n: int = 5):
         raise HTTPException(status_code=500, detail="Error generando artículos relacionados")
 
 
-@router.get("/articles/{url:path}")
+@router.get("/articles/{url:path}", dependencies=[Depends(rate_limit("read", 120, 60))])
 def get_article(url: str):
     """
     Retorna un artículo específico por su url de la BD.

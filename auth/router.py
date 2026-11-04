@@ -6,6 +6,8 @@ Reglas:
 - Contraseña de mínimo 8 caracteres con números, mayúsculas y caracteres especiales.
 - Un correo solo se puede registrar una vez.
 - 5 contraseñas incorrectas seguidas bloquean la cuenta temporalmente.
+- Un correo inexistente y una contraseña incorrecta reciben la misma respuesta (no se revela
+  qué correos están registrados). Además se limita el número de peticiones por IP.
 - Una sola sesión activa por cuenta: si hay otra abierta en otro navegador se rechaza el inicio
   de sesión, salvo que el usuario confirme cerrar la otra (force=true).
 - El token expira tras AUTH_TOKEN_IDLE_MINUTES sin peticiones (expiración deslizante) y, en todo
@@ -17,10 +19,11 @@ import os
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from auth import security
 from auth.mailer import ResetMailer
+from middleware.rate_limit import rate_limit
 from repository.user_repository import UserRepository
 
 logger = logging.getLogger(__name__)
@@ -28,7 +31,8 @@ logger = logging.getLogger(__name__)
 APP_MODE = os.getenv("APP_MODE", "local")
 
 # Clave de desarrollo: solo se acepta en local. En AWS se define AUTH_SECRET_KEY (Secrets Manager)
-DEV_SECRET_KEY = "datara-local-dev-key-no-usar-en-produccion-0000"
+# setup() la rechaza fuera de local (falso positivo B105 de Bandit)
+DEV_SECRET_KEY = "datara-local-dev-key-no-usar-en-produccion-0000"  # nosec B105
 
 
 def _int_env(name: str, default: int) -> int:
@@ -45,7 +49,7 @@ RESET_COOLDOWN_SECONDS = 60                                             # entre 
 # Página del frontend que recibe el enlace de recuperación (el token va en el fragmento #reset=)
 RESET_URL = os.getenv("AUTH_RESET_URL", "http://localhost:5500/login.html")
 
-GENERIC_LOGIN_ERROR = "Correo o contraseña incorrectos"
+GENERIC_LOGIN_ERROR = "Correo o contraseña incorrectos."
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 bearer = HTTPBearer(auto_error=False)
@@ -79,25 +83,26 @@ def setup(db):
 # ─────────────────────────────────────────────
 # Schemas
 # ─────────────────────────────────────────────
+# Topes de tamaño: evitan cuerpos enormes y que Argon2 tenga que procesar textos de megabytes
 class RegisterRequest(BaseModel):
-    name: str
-    email: str
-    password: str
+    name: str = Field(max_length=200)
+    email: str = Field(max_length=320)
+    password: str = Field(max_length=1024)
 
 
 class LoginRequest(BaseModel):
-    email: str
-    password: str
+    email: str = Field(max_length=320)
+    password: str = Field(max_length=1024)
     force: bool = False   # cerrar la sesión abierta en otro navegador
 
 
 class ForgotPasswordRequest(BaseModel):
-    email: str
+    email: str = Field(max_length=320)
 
 
 class ResetPasswordRequest(BaseModel):
-    token: str
-    password: str
+    token: str = Field(max_length=128)
+    password: str = Field(max_length=1024)
 
 
 # ─────────────────────────────────────────────
@@ -146,7 +151,8 @@ def current_session(credentials: HTTPAuthorizationCredentials = Depends(bearer))
 # ─────────────────────────────────────────────
 # Endpoints
 # ─────────────────────────────────────────────
-@router.post("/register", status_code=status.HTTP_201_CREATED)
+@router.post("/register", status_code=status.HTTP_201_CREATED,
+             dependencies=[Depends(rate_limit("auth-register", 5, 15 * 60))])
 def register(req: RegisterRequest):
     """Crea una cuenta. El correo y el nombre se guardan cifrados y la contraseña con Argon2id."""
     _require_ready()
@@ -165,7 +171,7 @@ def register(req: RegisterRequest):
     return {"message": "Cuenta creada. Ya puedes iniciar sesión."}
 
 
-@router.post("/login")
+@router.post("/login", dependencies=[Depends(rate_limit("auth-login", 10, 60))])
 def login(req: LoginRequest):
     """
     Inicia sesión y devuelve el token. Respuestas:
@@ -188,10 +194,8 @@ def login(req: LoginRequest):
             raise HTTPException(status_code=423, detail=(
                 f"Ingresaste {MAX_FAILED_ATTEMPTS} veces una contraseña incorrecta. Tu cuenta quedó "
                 f"bloqueada durante {LOCKOUT_SECONDS // 60} min."))
-        left = MAX_FAILED_ATTEMPTS - attempt["failed_attempts"]
-        raise HTTPException(status_code=401, detail=(
-            f"{GENERIC_LOGIN_ERROR}. Te queda{'n' if left > 1 else ''} {left} intento{'s' if left > 1 else ''} "
-            "antes del bloqueo temporal."))
+        # Mismo mensaje que con un correo inexistente: no se informan los intentos restantes
+        raise HTTPException(status_code=401, detail=GENERIC_LOGIN_ERROR)
 
     token = security.new_token()
     if not users.start_session(row["user_id"], security.token_hash(token),
@@ -203,19 +207,19 @@ def login(req: LoginRequest):
     return {"token": token, **_session_payload(row)}
 
 
-@router.get("/me")
+@router.get("/me", dependencies=[Depends(rate_limit("auth-session", 60, 60))])
 def me(session=Depends(current_session)):
     """Datos de la sesión actual. Cada llamada renueva la actividad del token."""
     return _session_payload(session)
 
 
-@router.post("/logout")
+@router.post("/logout", dependencies=[Depends(rate_limit("auth-session", 60, 60))])
 def logout(session=Depends(current_session)):
     users.end_session(session["session_hash"])
     return {"message": "Sesión cerrada"}
 
 
-@router.post("/forgot-password")
+@router.post("/forgot-password", dependencies=[Depends(rate_limit("auth-forgot", 5, 15 * 60))])
 def forgot_password(req: ForgotPasswordRequest):
     """
     Envía al correo un enlace para restablecer la contraseña.
@@ -237,7 +241,7 @@ def forgot_password(req: ForgotPasswordRequest):
     return message
 
 
-@router.post("/reset-password")
+@router.post("/reset-password", dependencies=[Depends(rate_limit("auth-reset", 10, 15 * 60))])
 def reset_password(req: ResetPasswordRequest):
     """Cambia la contraseña con el token del correo (un solo uso); desbloquea la cuenta y cierra la sesión."""
     _require_ready()

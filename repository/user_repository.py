@@ -3,8 +3,6 @@ from pathlib import Path
 # El DDL vive en POSTGRES_BD/ junto al resto del esquema; el Dockerfile lo copia a la imagen
 SCHEMA_FILE = Path(__file__).resolve().parent.parent / "POSTGRES_BD" / "create_auth_tables.sql"
 
-USER_COLUMNS = "user_id, email_enc, name_enc, password_hash, failed_attempts, locked_until"
-
 
 class UserRepository:
     """
@@ -34,8 +32,8 @@ class UserRepository:
 
     def get_by_email_hash(self, email_hash: str):
         return self.db.execute(
-            f"""
-            SELECT {USER_COLUMNS},
+            """
+            SELECT user_id, email_enc, name_enc, password_hash, failed_attempts, locked_until,
                    locked_until IS NOT NULL AND locked_until > now() AS is_locked,
                    GREATEST(0, CEIL(EXTRACT(EPOCH FROM locked_until - now()) / 60))::int AS locked_minutes
             FROM app.app_user WHERE email_hash = %s;""",

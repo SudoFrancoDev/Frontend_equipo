@@ -8,7 +8,8 @@ logger = logging.getLogger(__name__)
 
 
 class PostgreSQLConnection:
-    def __init__(
+    # Valores del Postgres local; en AWS main.py exige las variables de entorno (falso positivo B107)
+    def __init__(  # nosec B107
             self,
             host: str = "localhost",
             database: str = "news_dw",
